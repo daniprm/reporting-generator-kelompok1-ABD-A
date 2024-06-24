@@ -10,7 +10,7 @@ export async function getTableSchema() {
     const schemaQuery = await pool
       .request()
       .query(
-        "SELECT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+        "SELECT DISTINCT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
       );
 
     const schemas = [];
