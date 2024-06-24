@@ -1,10 +1,11 @@
 Cara pakai:
 
-Install node.js
-isi user, password, dan server sesuai dengan konfigurasi SQL Server anda
+1. Install node.js
+2. isi user, password, dan server sesuai dengan konfigurasi SQL Server anda
+
 Cara menjalankan:
 
-Buka terminal
-Pergi ke direktori project
-ketik 'node index.js' lalu enter
-Masukkan username: admin, password: asdfasdf
+1. Buka terminal
+2. Pergi ke direktori project
+3. ketik 'node index.js' lalu enter
+4. Masukkan username: admin, password: asdfasdf
