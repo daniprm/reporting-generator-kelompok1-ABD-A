@@ -28,7 +28,7 @@ export async function generateSalesReport(
         break;
     }
 
-    console.log("Sales Report generated successfully:");
+    console.log("Report generated successfully:");
 
     console.log("=======================================");
     // result.recordset.forEach((record) => {
@@ -39,7 +39,7 @@ export async function generateSalesReport(
 
     return result.recordset;
   } catch (error) {
-    console.error("Error generating sales report:", error);
+    console.error("Error generating report:", error);
     throw error;
   }
 }

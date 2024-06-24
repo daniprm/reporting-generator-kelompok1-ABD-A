@@ -71,15 +71,17 @@ async function selectTableNames(namaSkema) {
       type: "list",
       name: "action",
       message: "Pilih Tabel",
-      choices: await getTableNames(namaSkema),
+      choices: [...(await getTableNames(namaSkema)), "Back"],
     },
   ];
   const selectTableNameAnswer = await inquirer.prompt(selectTableNameQuestions);
 
-  selectReportDesigner(
-    namaSkema + "." + selectTableNameAnswer.action,
-    selectTableNameAnswer.action
-  );
+  selectTableNameAnswer.action === "Back"
+    ? selectTableSchema()
+    : selectReportDesigner(
+        namaSkema + "." + selectTableNameAnswer.action,
+        selectTableNameAnswer.action
+      );
 }
 
 async function selectReportDesigner(namaTableFull, namaTable) {
@@ -88,7 +90,7 @@ async function selectReportDesigner(namaTableFull, namaTable) {
       type: "list",
       name: "action",
       message: "Pilih Desain Laporan",
-      choices: ["Group By", "Exit"],
+      choices: ["Group By", "Back"],
     },
   ];
   const selectReportDesignerAnswer = await inquirer.prompt(
@@ -97,34 +99,35 @@ async function selectReportDesigner(namaTableFull, namaTable) {
 
   switch (selectReportDesignerAnswer.action) {
     case "Group By":
-      await pilihOperasi(namaTable, namaTableFull);
+      await pilihOperasi(namaTableFull, namaTable);
       break;
-    case "Exit":
-      console.log("Exiting application...");
-      process.exit(); // Exits the application
+    case "Back":
+      selectTableSchema();
   }
 }
 
-async function pilihOperasi(namaTable, namaTableFull) {
+async function pilihOperasi(namaTableFull, namaTable) {
   const pilihOperasiQuestion = [
     {
       type: "list",
       name: "action",
       message: "Pilih Kolom Untuk dikelompokkan",
-      choices: ["Jumlah", "Hitung", "Rata-Rata"],
+      choices: ["Jumlah", "Hitung", "Rata-Rata", "Back"],
     },
   ];
   const pilihOperasiAnswer = await inquirer.prompt(pilihOperasiQuestion);
 
-  await pilihKolom(namaTable, namaTableFull, pilihOperasiAnswer.action);
+  pilihOperasiAnswer.action === "Back"
+    ? selectReportDesigner(namaTableFull, namaTable)
+    : await pilihKolom(namaTableFull, namaTable, pilihOperasiAnswer.action);
 }
-async function pilihKolom(namaTable, namaTableFull, operasi) {
+async function pilihKolom(namaTableFull, namaTable, operasi) {
   const pilihKolomKlpQuestion = [
     {
       type: "list",
       name: "action",
       message: "Pilih Kolom Untuk dikelompokkan",
-      choices: await getColumns(namaTable),
+      choices: [...(await getColumns(namaTable))],
     },
   ];
   const pilihKolomKlpAnswer = await inquirer.prompt(pilihKolomKlpQuestion);
@@ -134,18 +137,20 @@ async function pilihKolom(namaTable, namaTableFull, operasi) {
       type: "list",
       name: "action",
       message: "Pilih Kolom Untuk dioperasikan (harus angka)",
-      choices: await getColumns(namaTable),
+      choices: [...(await getColumns(namaTable)), "Back"],
     },
   ];
   const pilihKolomOperasiAnswer = await inquirer.prompt(
     pilihKolomOperasiQuestion
   );
 
-  generateSalesReport(
-    namaTableFull,
-    pilihKolomOperasiAnswer.action,
-    pilihKolomKlpAnswer.action,
-    operasi
-  );
+  pilihKolomOperasiAnswer.action === "Back"
+    ? pilihOperasi(namaTableFull, namaTable)
+    : generateSalesReport(
+        namaTableFull,
+        pilihKolomOperasiAnswer.action,
+        pilihKolomKlpAnswer.action,
+        operasi
+      );
 }
 main();
