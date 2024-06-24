@@ -13,17 +13,17 @@ export async function generateSalesReport(
     switch (operasi) {
       case "Jumlah":
         result = await sql.query(`
-          SELECT ${kolomKelompok}, SUM(${kolomOperasi}) FROM ${namaTable} GROUP BY ${kolomKelompok}
+          SELECT ${kolomKelompok}, SUM(${kolomOperasi}) as Jumlah FROM ${namaTable} GROUP BY ${kolomKelompok}
         `);
         break;
       case "Hitung":
         result = await sql.query(`
-          SELECT ${kolomKelompok}, COUNT(${kolomOperasi}) FROM ${namaTable} GROUP BY ${kolomKelompok}
+          SELECT ${kolomKelompok}, COUNT(${kolomOperasi}) as Hitung FROM ${namaTable} GROUP BY ${kolomKelompok}
         `);
         break;
       case "Rata-Rata":
         result = await sql.query(`
-          SELECT ${kolomKelompok}, AVG(${kolomOperasi}) FROM ${namaTable} GROUP BY ${kolomKelompok}
+          SELECT ${kolomKelompok}, AVG(${kolomOperasi}) as Rata-Rata FROM ${namaTable} GROUP BY ${kolomKelompok}
         `);
         break;
     }
