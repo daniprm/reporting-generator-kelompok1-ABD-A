@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
-import { secretKey } from "./config.js";
+import { secretKey, getConfigData } from "./config.js";
 
-export async function authenticateUser(username, password) {
-  if (username === "admin" && password === "asdfasdf") {
-    const token = jwt.sign({ username }, secretKey, { expiresIn: "1h" });
+export async function authenticateUser(user, password, database, server) {
+  if (getConfigData(user, password, database, server)) {
+    const token = jwt.sign({ user }, secretKey, { expiresIn: "1h" });
     return token;
   }
   throw new Error("Username or password is incorrect");

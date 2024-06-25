@@ -1,18 +1,22 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
 import { exportSalesReportToExcel } from "./exportExcel.js";
-import { generateSalesReport } from "./reports.js";
+import { generateReport } from "./reports.js";
 import { getTableSchema, getTableNames, getColumns } from "./getTables.js";
 
 async function main() {
-  const { username, password } = await inquirer.prompt([
-    { type: "input", name: "username", message: "Username:" },
+  console.log("Masukkan data untuk autentikasi database: ");
+  const { user, password, database, server } = await inquirer.prompt([
+    { type: "input", name: "user", message: "User:" },
     { type: "password", name: "password", message: "Password:" },
+    { type: "input", name: "database", message: "Database:" },
+    { type: "input", name: "server", message: "Server:" },
   ]);
 
   try {
-    const token = await authenticateUser(username, password);
-    console.log("Authenticated successfully");
+    const token = await authenticateUser(user, password, database, server);
+
+    console.log("Autentikasi Berhasil!");
 
     const mainQuestions = [
       {
@@ -100,7 +104,7 @@ async function selectReportDesigner(namaTableFull, namaTable) {
 
   switch (selectReportDesignerAnswer.action) {
     case "Group By":
-      await pilihOperasi(namaTableFull, namaTable);
+      await pilihAgregasi(namaTableFull, namaTable);
       break;
     case "Back":
       selectTableSchema();
@@ -109,8 +113,8 @@ async function selectReportDesigner(namaTableFull, namaTable) {
 //=================================END OF REPORT DESIGNER===================================
 
 // =======================================GROUP BY==========================================
-async function pilihOperasi(namaTableFull, namaTable) {
-  const pilihOperasiQuestion = [
+async function pilihAgregasi(namaTableFull, namaTable) {
+  const pilihAgregasiQuestion = [
     {
       type: "list",
       name: "action",
@@ -118,13 +122,13 @@ async function pilihOperasi(namaTableFull, namaTable) {
       choices: ["Jumlah", "Hitung", "Rata-Rata", "Back"],
     },
   ];
-  const pilihOperasiAnswer = await inquirer.prompt(pilihOperasiQuestion);
+  const pilihAgregasiAnswer = await inquirer.prompt(pilihAgregasiQuestion);
 
-  pilihOperasiAnswer.action === "Back"
+  pilihAgregasiAnswer.action === "Back"
     ? selectReportDesigner(namaTableFull, namaTable)
-    : await pilihKolom(namaTableFull, namaTable, pilihOperasiAnswer.action);
+    : await pilihKolom(namaTableFull, namaTable, pilihAgregasiAnswer.action);
 }
-async function pilihKolom(namaTableFull, namaTable, operasi) {
+async function pilihKolom(namaTableFull, namaTable, agregasi) {
   const pilihKolomKlpQuestion = [
     {
       type: "list",
@@ -135,25 +139,25 @@ async function pilihKolom(namaTableFull, namaTable, operasi) {
   ];
   const pilihKolomKlpAnswer = await inquirer.prompt(pilihKolomKlpQuestion);
 
-  const pilihKolomOperasiQuestion = [
+  const pilihKolomAgregasiQuestion = [
     {
       type: "list",
       name: "action",
-      message: "Pilih Kolom Untuk dioperasikan (harus angka)",
+      message: "Pilih Kolom Untuk diagregasikan (harus angka)",
       choices: [...(await getColumns(namaTable)), "Back"],
     },
   ];
-  const pilihKolomOperasiAnswer = await inquirer.prompt(
-    pilihKolomOperasiQuestion
+  const pilihKolomAgregasiAnswer = await inquirer.prompt(
+    pilihKolomAgregasiQuestion
   );
 
-  pilihKolomOperasiAnswer.action === "Back"
-    ? pilihOperasi(namaTableFull, namaTable)
-    : generateSalesReport(
+  pilihKolomAgregasiAnswer.action === "Back"
+    ? pilihAgregasi(namaTableFull, namaTable)
+    : generateReport(
         namaTableFull,
-        pilihKolomOperasiAnswer.action,
+        pilihKolomAgregasiAnswer.action,
         pilihKolomKlpAnswer.action,
-        operasi
+        agregasi
       );
 }
 //==========================END GROUP BY===========================================
