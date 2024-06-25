@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
-import { secretKey } from "./config.js";
+import { secretKey, getConfigData } from "./config.js";
 
-export async function authenticateUser(username, password) {
-  if (username === "admin" && password === "asdfasdf") {
-    const token = jwt.sign({ username }, secretKey, { expiresIn: "1h" });
+export async function authenticateUser(user, password, database, server) {
+  if ((await getConfigData(user, password, database, server)) === true) {
+    const token = jwt.sign({ user }, secretKey, { expiresIn: "1h" });
     return token;
   }
-  throw new Error("Username or password is incorrect");
+  throw new Error("User, password, database, atau server salah");
 }
 
 export function authorize(token) {

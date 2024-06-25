@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { generateSalesReport } from "./reports.js";
+import { generateReport } from "./reports.js";
 
 export async function exportSalesReportToExcel() {
   const data = await generateSalesReport();
