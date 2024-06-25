@@ -84,6 +84,7 @@ async function selectTableNames(namaSkema) {
       );
 }
 
+// ============================REPORT DESIGNER==========================================
 async function selectReportDesigner(namaTableFull, namaTable) {
   const selectReportDesignerQuestions = [
     {
@@ -105,7 +106,9 @@ async function selectReportDesigner(namaTableFull, namaTable) {
       selectTableSchema();
   }
 }
+//=================================END OF REPORT DESIGNER===================================
 
+// =======================================GROUP BY==========================================
 async function pilihOperasi(namaTableFull, namaTable) {
   const pilihOperasiQuestion = [
     {
@@ -153,4 +156,5 @@ async function pilihKolom(namaTableFull, namaTable, operasi) {
         operasi
       );
 }
+//==========================END GROUP BY===========================================
 main();
