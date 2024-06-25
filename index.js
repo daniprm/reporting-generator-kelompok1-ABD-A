@@ -3,6 +3,7 @@ import { authenticateUser } from "./auth.js";
 import { exportSalesReportToExcel } from "./exportExcel.js";
 import { generateReport } from "./reports.js";
 import { getTableSchema, getTableNames, getColumns } from "./getTables.js";
+import { loginReports, databaseAuthReports } from "./authReports.js";
 
 async function main() {
   console.log("Masukkan data untuk autentikasi database: ");
@@ -95,7 +96,11 @@ async function main() {
           type: "list",
           name: "action",
           message: "Pilih Desain Laporan",
-          choices: ["Group By", "Kembali"],
+          choices: [
+            "Kelompokkan Berdasarkan Kolom",
+            "Laporan Autentikasi",
+            "Kembali",
+          ],
         },
       ];
       const selectReportDesignerAnswer = await inquirer.prompt(
@@ -103,8 +108,28 @@ async function main() {
       );
 
       switch (selectReportDesignerAnswer.action) {
-        case "Group By":
+        case "Kelompokkan Berdasarkan Kolom":
           await pilihAgregasi(namaTableFull, namaTable);
+          break;
+        case "Laporan Autentikasi":
+          const tingkatAutentikasiQuestions = [
+            {
+              type: "list",
+              name: "action",
+              message: "Pilih Tingkat Autentikasi: ",
+              choices: ["Login (Server)", "Database"],
+            },
+          ];
+          const tingkatAutentikasiAnswer = await inquirer.prompt(
+            tingkatAutentikasiQuestions
+          );
+          if (tingkatAutentikasiAnswer.action === "Login (Server)") {
+            await loginReports();
+            endQuestion();
+          } else {
+            await databaseAuthReports();
+            endQuestion();
+          }
           break;
         case "Kembali":
           selectTableSchema();
@@ -163,7 +188,10 @@ async function main() {
             pilihKolomKlpAnswer.action,
             agregasi
           );
+      endQuestion();
+    }
 
+    async function endQuestion() {
       const endQuestions = [
         {
           type: "list",
