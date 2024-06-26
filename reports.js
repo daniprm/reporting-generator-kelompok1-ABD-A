@@ -1,6 +1,6 @@
 import sql from "mssql";
 import { sqlConfig } from "./config.js";
-// import util from "util";
+import util from "util";
 import Table from "cli-table3";
 
 export async function generateReport(
