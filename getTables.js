@@ -73,3 +73,27 @@ export async function getColumns(namaTable) {
     console.error("Error retrieving table names:", err.message);
   }
 }
+export async function getColumnsAngka(namaTable) {
+  try {
+    // Establish a connection to the database
+    let pool = await sql.connect(sqlConfig);
+
+    // Query to get all table names in the current database
+    const result = await pool
+      .request()
+      .query(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '${namaTable}' AND DATA_TYPE IN ('int', 'bigint', 'smallint', 'tinyint', 'decimal', 'numeric', 'float', 'real', 'money', 'smallmoney') ORDER BY ORDINAL_POSITION;`
+      );
+
+    const columnNames = [];
+    result.recordset.forEach((table) => {
+      columnNames.push(table.COLUMN_NAME);
+    });
+
+    // Close the connection
+    await pool.close();
+    return columnNames;
+  } catch (err) {
+    console.error("Error retrieving table names:", err.message);
+  }
+}

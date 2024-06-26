@@ -25,7 +25,7 @@ export async function generateReport(
         break;
       case "Rata-Rata":
         result = await sql.query(`
-          SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as Rata-Rata FROM ${namaTable} GROUP BY ${kolomKelompok}
+          SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata' FROM ${namaTable} GROUP BY ${kolomKelompok}
         `);
         break;
     }
