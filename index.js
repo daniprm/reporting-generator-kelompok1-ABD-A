@@ -33,6 +33,7 @@ async function main() {
           message: "Menu Utama",
           choices: [
             "Kelompokkan Berdasarkan Kolom",
+            "Lihat Semua Data",
             "Laporan Autentikasi",
             "Keluar",
           ],
@@ -49,6 +50,10 @@ async function main() {
           // await generateSalesReport(); // Output will be displayed in terminal
           // await exportSalesReportToExcel();
           // console.log("Report has been exported successfully.");
+
+          break;
+        case "Lihat Semua Data":
+          tampilSemua();
 
           break;
         case "Laporan Autentikasi":
@@ -147,6 +152,9 @@ async function main() {
 
     // PEMBAGIAN KERJA MULAI DI SINI
 
+    async function tampilSemua(){
+
+    }
     // =======================================GROUP BY==========================================
     async function groupBy() {
       const namaSkema = await selectTableSchema();
