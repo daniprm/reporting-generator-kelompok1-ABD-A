@@ -100,6 +100,25 @@ async function main() {
       else return tableData;
     }
 
+    //Fungsinya seperti checkbox
+    async function pilihBanyakKolom(namaTabel) {
+      const banyakKolomQuestion = [
+        {
+          type: "checkbox",
+          name: "dataKolom",
+          message: "Pilih Kolom",
+          choices: [...(await getColumns(namaTabel))],
+        },
+      ];
+
+      const banyakKolomAnswers = await inquirer.prompt(banyakKolomQuestion);
+
+      let kolomHasil = "";
+      banyakKolomAnswers.dataKolom.forEach((res) => (kolomHasil += res + ", "));
+      console.log(kolomHasil);
+      return kolomHasil;
+    }
+
     async function pilihKolom(namaTabel) {
       const pilihKolomQuestion = [
         {
