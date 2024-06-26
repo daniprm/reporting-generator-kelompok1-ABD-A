@@ -44,8 +44,9 @@ export async function loginReports() {
 
     return result.recordset;
   } catch (error) {
-    console.error("Error generating report:", error);
-    throw error;
+    console.error(
+      "Terjadi kesalhan saat membuat laporan login, pastikan telah terkoneksi dengan SQL Server dengan Azure / SSMS"
+    );
   }
 }
 export async function databaseAuthReports() {
@@ -71,6 +72,7 @@ export async function databaseAuthReports() {
     // Membuat tabel CLI
     const table = new Table({
       head: Object.keys(result.recordset[0]),
+      colWidths: [30, 20],
     });
 
     // Menambahkan data ke tabel
@@ -88,6 +90,5 @@ export async function databaseAuthReports() {
     return result.recordset;
   } catch (error) {
     console.error("Error generating report:", error);
-    throw error;
   }
 }
