@@ -97,3 +97,27 @@ export async function getColumnsAngka(namaTable) {
     console.error("Error retrieving table names:", err.message);
   }
 }
+export async function getPivotColumnDetail(namaTable,pivotColumn) {
+  try {
+    // Establish a connection to the database
+    let pool = await sql.connect(sqlConfig);
+
+    // Query to get all table names in the current database
+    const result = await pool
+      .request()
+      .query(
+        `SELECT DISTINCT ${pivotColumn} FROM ${namaTable};`
+      );
+
+    const pivotColumnNames = [];
+    result.recordset.forEach((table) => {
+      pivotColumnNames.push(table.pivotColumn);
+    });
+
+    // Close the connection
+    await pool.close();
+    return pivotColumnNames;
+  } catch (err) {
+    console.error("Error retrieving table names:", err.message);
+  }
+}

@@ -1,12 +1,13 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
 import { exportSalesReportToExcel } from "./exportExcel.js";
-import { generateGroupByReport } from "./reports.js";
+import { generateGroupByReport, generatePivotReport } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
   getColumns,
   getColumnsAngka,
+  getPivotColumnDetail
 } from "./getTables.js";
 import { loginReports, databaseAuthReports } from "./authReports.js";
 
@@ -148,11 +149,43 @@ async function main() {
       const pilihKolomAnswer = await inquirer.prompt(pilihKolomQuestion);
       return pilihKolomAnswer.action;
     }
+
     // ==================End of Ngambil Data tabel (skema, nama tabel full, kolom)==============
 
     // PEMBAGIAN KERJA MULAI DI SINI
+    // PIVOTTT
+      async function getColumnPivot(){
+        const namaSkema = await selectTableSchema();
+        const dataTabel = await selectTableNames(namaSkema);
+        const sourceColumn = await pilihBanyakKolom(dataTabel.namaTabel);
+        const pilihanAgregasi = await pilihAgregasi();
+        const pivotColumn = await pilihKolom(dataTabel.namaTabel);
+        const pivotColumnDetail = await getColumnPivot(dataTabel.namaTabel,pivotColumn);
+        
+        if (pilihanAgregasi === "Kembali") getColumnPivot();
+        else{
+          console.log(`Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`);
+         let kolomAgregasi;
+         pilihanAgregasi === "Hitung"
+         ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
+         : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
+      
+        generatePivotReport(
+          dataTabel.namaTabelFULL,
+          kolomAgregasi,
+          sourceColumn,
+          pivotColumn,
+          pilihanAgregasi,
+          
+        );
+        endQuestion();
 
-    async function tampilSemua() {}
+      }
+    // END PIVOTTT
+
+    async function tampilSemua(){
+      
+    }
     // =======================================GROUP BY==========================================
     async function groupBy() {
       const namaSkema = await selectTableSchema();
@@ -169,27 +202,13 @@ async function main() {
         console.log("Pilih Kolom Untuk Dikelompokkan");
         const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
 
-        const pilihLangkahBerikutnya = [
-          {
-            type: "list",
-            name: "action",
-            message: "Pilih Kolom",
-            choices: ["Filter Data", "Tampilkan Data"],
-          },
-        ];
-        const pilihLangkahBerikutnyaAnswer = await inquirer.prompt(
-          pilihLangkahBerikutnya
+        generateGroupByReport(
+          dataTabel.namaTabelFull,
+          kolomAgregasi,
+          kolomKelompok,
+          pilihanAgregasi
         );
-        if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
-          generateGroupByReport(
-            dataTabel.namaTabelFull,
-            kolomAgregasi,
-            kolomKelompok,
-            pilihanAgregasi
-          );
-          endQuestion();
-        } else {
-        }
+        endQuestion();
       }
     }
 
@@ -252,6 +271,7 @@ async function main() {
         endQuestion();
       }
     }
+  }
   } catch (error) {
     console.error("Error:", error.message);
   }
