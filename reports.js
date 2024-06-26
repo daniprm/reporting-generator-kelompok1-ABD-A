@@ -3,7 +3,7 @@ import { sqlConfig } from "./config.js";
 import util from "util";
 import Table from "cli-table3";
 
-export async function generateReport(
+export async function generateGroupByReport(
   namaTable,
   kolomAgregasi,
   kolomKelompok,
@@ -15,17 +15,17 @@ export async function generateReport(
     switch (agregasi) {
       case "Jumlah":
         result = await sql.query(`
-          SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as Jumlah FROM ${namaTable} GROUP BY ${kolomKelompok}
+          SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
         `);
         break;
       case "Hitung":
         result = await sql.query(`
-          SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as Jumlah FROM ${namaTable} GROUP BY ${kolomKelompok}
+          SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
         `);
         break;
       case "Rata-Rata":
         result = await sql.query(`
-          SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata' FROM ${namaTable} GROUP BY ${kolomKelompok}
+          SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
         `);
         break;
     }
@@ -40,10 +40,10 @@ export async function generateReport(
     console.log(util.inspect(result.recordset, { maxArrayLength: null }));
 
     console.log("======================================");
-
     // // Membuat tabel CLI
     // const table = new Table({
     //   head: Object.keys(result.recordset[0]),
+    //   colWidths: [30, 20],
     // });
 
     // // Menambahkan data ke tabel

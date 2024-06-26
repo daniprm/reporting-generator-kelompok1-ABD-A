@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
 import { exportSalesReportToExcel } from "./exportExcel.js";
-import { generateReport } from "./reports.js";
+import { generateGroupByReport } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
@@ -105,6 +105,25 @@ async function main() {
       else return tableData;
     }
 
+    //Fungsinya seperti checkbox
+    async function pilihBanyakKolom(namaTabel) {
+      const banyakKolomQuestion = [
+        {
+          type: "checkbox",
+          name: "dataKolom",
+          message: "Pilih Kolom",
+          choices: [...(await getColumns(namaTabel))],
+        },
+      ];
+
+      const banyakKolomAnswers = await inquirer.prompt(banyakKolomQuestion);
+
+      let kolomHasil = "";
+      banyakKolomAnswers.dataKolom.forEach((res) => (kolomHasil += res + ", "));
+      console.log(kolomHasil);
+      return kolomHasil;
+    }
+
     async function pilihKolom(namaTabel) {
       const pilihKolomQuestion = [
         {
@@ -152,7 +171,7 @@ async function main() {
         console.log("Pilih Kolom Untuk Dikelompokkan");
         const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
 
-        generateReport(
+        generateGroupByReport(
           dataTabel.namaTabelFull,
           kolomAgregasi,
           kolomKelompok,
