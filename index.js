@@ -152,9 +152,7 @@ async function main() {
 
     // PEMBAGIAN KERJA MULAI DI SINI
 
-    async function tampilSemua(){
-
-    }
+    async function tampilSemua() {}
     // =======================================GROUP BY==========================================
     async function groupBy() {
       const namaSkema = await selectTableSchema();
@@ -171,13 +169,27 @@ async function main() {
         console.log("Pilih Kolom Untuk Dikelompokkan");
         const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
 
-        generateGroupByReport(
-          dataTabel.namaTabelFull,
-          kolomAgregasi,
-          kolomKelompok,
-          pilihanAgregasi
+        const pilihLangkahBerikutnya = [
+          {
+            type: "list",
+            name: "action",
+            message: "Pilih Kolom",
+            choices: ["Filter Data", "Tampilkan Data"],
+          },
+        ];
+        const pilihLangkahBerikutnyaAnswer = await inquirer.prompt(
+          pilihLangkahBerikutnya
         );
-        endQuestion();
+        if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
+          generateGroupByReport(
+            dataTabel.namaTabelFull,
+            kolomAgregasi,
+            kolomKelompok,
+            pilihanAgregasi
+          );
+          endQuestion();
+        } else {
+        }
       }
     }
 
