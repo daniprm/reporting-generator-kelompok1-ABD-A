@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
 import { exportSalesReportToExcel } from "./exportExcel.js";
-import { generateReport } from "./reports.js";
+import { generateGroupByReport } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
@@ -163,7 +163,7 @@ async function main() {
         console.log("Pilih Kolom Untuk Dikelompokkan");
         const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
 
-        generateReport(
+        generateGroupByReport(
           dataTabel.namaTabelFull,
           kolomAgregasi,
           kolomKelompok,

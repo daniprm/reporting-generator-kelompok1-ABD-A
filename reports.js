@@ -3,7 +3,7 @@ import { sqlConfig } from "./config.js";
 import util from "util";
 import Table from "cli-table3";
 
-export async function generateReport(
+export async function generateGroupByReport(
   namaTable,
   kolomAgregasi,
   kolomKelompok,

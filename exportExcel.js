@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { generateReport } from "./reports.js";
+import { generateGroupByReport } from "./reports.js";
 
 export async function exportSalesReportToExcel() {
   const data = await generateSalesReport();
