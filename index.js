@@ -19,14 +19,18 @@ async function main() {
 
     console.log("Autentikasi Berhasil!");
     menuAwal();
-
+    // ==================Menu Awal=========================
     async function menuAwal() {
       const mainQuestions = [
         {
           type: "list",
           name: "action",
-          message: "Menu Awal",
-          choices: ["Generate Report", "Export Data", "Keluar"],
+          message: "Menu Utama",
+          choices: [
+            "Kelompokkan Berdasarkan Kolom",
+            "Laporan Autentikasi",
+            "Keluar",
+          ],
         },
       ];
 
@@ -34,24 +38,25 @@ async function main() {
 
       // Handle the selection
       switch (mainAnswers.action) {
-        case "Generate Report":
-          selectTableSchema();
+        case "Kelompokkan Berdasarkan Kolom":
+          groupBy();
           // console.log("Generating report...");
           // await generateSalesReport(); // Output will be displayed in terminal
           // await exportSalesReportToExcel();
           // console.log("Report has been exported successfully.");
 
           break;
-        case "Export Data":
-          console.log("Exporting data...");
-          // Function to export data
+        case "Laporan Autentikasi":
+          await laporanAutentikasi();
           break;
         case "Keluar":
           console.log("Keluar Dari Aplikasi...");
           process.exit(); // Keluar dari Aplikasi
       }
     }
+    // ==================End Of Menu Awal=========================
 
+    // ==================Ngambil Data tabel (skema & nama tabel full)==============
     async function selectTableSchema() {
       const selectTableSchemaQuestions = [
         {
@@ -64,8 +69,7 @@ async function main() {
       const selectTableSchemaAnswer = await inquirer.prompt(
         selectTableSchemaQuestions
       );
-
-      selectTableNames(selectTableSchemaAnswer.action);
+      return selectTableSchemaAnswer.action;
     }
 
     async function selectTableNames(namaSkema) {
@@ -81,64 +85,56 @@ async function main() {
         selectTableNameQuestions
       );
 
-      selectTableNameAnswer.action === "Kembali"
-        ? selectTableSchema()
-        : selectReportDesigner(
-            namaSkema + "." + selectTableNameAnswer.action,
-            selectTableNameAnswer.action
-          );
+      const tableData = {
+        skema: namaSkema,
+        namaTabel: selectTableNameAnswer.action,
+        namaTabelFull: namaSkema + "." + selectTableNameAnswer.action,
+      };
+
+      if (selectTableNameAnswer.action === "Kembali") selectTableSchema();
+      else return tableData;
     }
 
-    // ============================REPORT DESIGNER==========================================
-    async function selectReportDesigner(namaTableFull, namaTable) {
-      const selectReportDesignerQuestions = [
+    async function pilihKolom(namaTabel) {
+      const pilihKolomQuestion = [
         {
           type: "list",
           name: "action",
-          message: "Pilih Desain Laporan",
-          choices: [
-            "Kelompokkan Berdasarkan Kolom",
-            "Laporan Autentikasi",
-            "Kembali",
-          ],
+          message: "Pilih Kolom",
+          choices: [...(await getColumns(namaTabel))],
         },
       ];
-      const selectReportDesignerAnswer = await inquirer.prompt(
-        selectReportDesignerQuestions
-      );
-
-      switch (selectReportDesignerAnswer.action) {
-        case "Kelompokkan Berdasarkan Kolom":
-          await pilihAgregasi(namaTableFull, namaTable);
-          break;
-        case "Laporan Autentikasi":
-          const tingkatAutentikasiQuestions = [
-            {
-              type: "list",
-              name: "action",
-              message: "Pilih Tingkat Autentikasi: ",
-              choices: ["Login (Server)", "Database"],
-            },
-          ];
-          const tingkatAutentikasiAnswer = await inquirer.prompt(
-            tingkatAutentikasiQuestions
-          );
-          if (tingkatAutentikasiAnswer.action === "Login (Server)") {
-            await loginReports();
-            endQuestion();
-          } else {
-            await databaseAuthReports();
-            endQuestion();
-          }
-          break;
-        case "Kembali":
-          selectTableSchema();
-      }
+      const pilihKolomAnswer = await inquirer.prompt(pilihKolomQuestion);
+      return pilihKolomAnswer.action;
     }
-    //=================================END OF REPORT DESIGNER===================================
+    // ==================End of Ngambil Data tabel (skema, nama tabel full, kolom)==============
+
+    // PEMBAGIAN KERJA MULAI DI SINI
 
     // =======================================GROUP BY==========================================
-    async function pilihAgregasi(namaTableFull, namaTable) {
+    async function groupBy() {
+      const namaSkema = await selectTableSchema();
+      const dataTabel = await selectTableNames(namaSkema);
+      const pilihanAgregasi = await pilihAgregasi();
+
+      if (pilihanAgregasi === "Kembali") groupBy();
+      else {
+        console.log(`Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`);
+        const kolomAgregasi = await pilihKolom(dataTabel.namaTabel);
+        console.log("Pilih Kolom Untuk Dikelompokkan");
+        const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
+
+        generateReport(
+          dataTabel.namaTabelFull,
+          kolomAgregasi,
+          kolomKelompok,
+          pilihanAgregasi
+        );
+        endQuestion();
+      }
+    }
+
+    async function pilihAgregasi() {
       const pilihAgregasiQuestion = [
         {
           type: "list",
@@ -148,48 +144,9 @@ async function main() {
         },
       ];
       const pilihAgregasiAnswer = await inquirer.prompt(pilihAgregasiQuestion);
-
-      pilihAgregasiAnswer.action === "Kembali"
-        ? selectReportDesigner(namaTableFull, namaTable)
-        : await pilihKolom(
-            namaTableFull,
-            namaTable,
-            pilihAgregasiAnswer.action
-          );
+      return pilihAgregasiAnswer.action;
     }
-    async function pilihKolom(namaTableFull, namaTable, agregasi) {
-      const pilihKolomKlpQuestion = [
-        {
-          type: "list",
-          name: "action",
-          message: "Pilih Kolom Untuk dikelompokkan",
-          choices: [...(await getColumns(namaTable))],
-        },
-      ];
-      const pilihKolomKlpAnswer = await inquirer.prompt(pilihKolomKlpQuestion);
-
-      const pilihKolomAgregasiQuestion = [
-        {
-          type: "list",
-          name: "action",
-          message: "Pilih Kolom Untuk diagregasikan (harus angka)",
-          choices: [...(await getColumns(namaTable)), "Kembali"],
-        },
-      ];
-      const pilihKolomAgregasiAnswer = await inquirer.prompt(
-        pilihKolomAgregasiQuestion
-      );
-
-      pilihKolomAgregasiAnswer.action === "Kembali"
-        ? pilihAgregasi(namaTableFull, namaTable)
-        : generateReport(
-            namaTableFull,
-            pilihKolomAgregasiAnswer.action,
-            pilihKolomKlpAnswer.action,
-            agregasi
-          );
-      endQuestion();
-    }
+    // =======================================End of GROUP BY==========================================
 
     async function endQuestion() {
       const endQuestions = [
@@ -197,19 +154,43 @@ async function main() {
           type: "list",
           name: "action",
           message: "Pilih Langkah Berikutnya",
-          choices: ["Export Data Ke Excel", "Kembali Menu Awal", "Keluar"],
+          choices: ["Export Data Ke Excel", "Kembali Menu Utama", "Keluar"],
         },
       ];
 
       const endAnswer = await inquirer.prompt(endQuestions);
 
       switch (endAnswer.action) {
-        case "Kembali Menu Awal":
+        case "Kembali Menu Utama":
           menuAwal();
           break;
         case "Keluar":
           console.log("Keluar Dari Aplikasi...");
           process.exit(); // Keluar dari Aplikasi
+      }
+    }
+
+    async function laporanAutentikasi() {
+      const tingkatAutentikasiQuestions = [
+        {
+          type: "list",
+          name: "action",
+          message: "Pilih Tingkat Autentikasi: ",
+          choices: [
+            "Login / Server (Login ke SQL Server di SSMS/Azure terlebih dahulu)",
+            "Database",
+          ],
+        },
+      ];
+      const tingkatAutentikasiAnswer = await inquirer.prompt(
+        tingkatAutentikasiQuestions
+      );
+      if (tingkatAutentikasiAnswer.action === "Database") {
+        await databaseAuthReports();
+        endQuestion();
+      } else {
+        await loginReports();
+        endQuestion();
       }
     }
     //==========================END GROUP BY===========================================

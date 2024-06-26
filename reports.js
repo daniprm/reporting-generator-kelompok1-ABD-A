@@ -30,7 +30,7 @@ export async function generateReport(
         break;
     }
 
-    console.log("Report generated successfully:");
+    console.log("\n Laporan berhasil dibuat!");
 
     // result.recordset.forEach((record) => {
     //   console.log(`${record}`);
@@ -46,13 +46,15 @@ export async function generateReport(
     result.recordset.forEach((record) => {
       let temp = [];
       Object.values(record).forEach((value) => {
-        temp.push(value); // Output: abc, kls
+        temp.push(value.toString()); // Output: abc, kls
       });
       table.push(temp);
     });
 
     // Menampilkan tabel di console
     console.log(table.toString());
+
+    console.log("Gunakan tombol panah pada keyboard untuk navigasi: ");
 
     return result.recordset;
   } catch (error) {
