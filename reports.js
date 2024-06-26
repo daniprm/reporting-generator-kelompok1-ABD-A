@@ -32,27 +32,31 @@ export async function generateReport(
 
     console.log("\n Laporan berhasil dibuat!");
 
+    console.log("======================================");
+
     // result.recordset.forEach((record) => {
     //   console.log(`${record}`);
     // });
-    // console.log(util.inspect(result.recordset, { maxArrayLength: null }));
+    console.log(util.inspect(result.recordset, { maxArrayLength: null }));
 
-    // Membuat tabel CLI
-    const table = new Table({
-      head: Object.keys(result.recordset[0]),
-    });
+    console.log("======================================");
 
-    // Menambahkan data ke tabel
-    result.recordset.forEach((record) => {
-      let temp = [];
-      Object.values(record).forEach((value) => {
-        temp.push(value.toString()); // Output: abc, kls
-      });
-      table.push(temp);
-    });
+    // // Membuat tabel CLI
+    // const table = new Table({
+    //   head: Object.keys(result.recordset[0]),
+    // });
 
-    // Menampilkan tabel di console
-    console.log(table.toString());
+    // // Menambahkan data ke tabel
+    // result.recordset.forEach((record) => {
+    //   let temp = [];
+    //   Object.values(record).forEach((value) => {
+    //     temp.push(value.toString()); // Output: abc, kls
+    //   });
+    //   table.push(temp);
+    // });
+
+    // // Menampilkan tabel di console
+    // console.log(table.toString());
 
     console.log("Gunakan tombol panah pada keyboard untuk navigasi: ");
 
