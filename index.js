@@ -1,13 +1,12 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
 import { exportSalesReportToExcel } from "./exportExcel.js";
-import { generateGroupByReport, generatePivotReport } from "./reports.js";
+import { generateGroupByReport } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
   getColumns,
   getColumnsAngka,
-  getPivotColumnDetail
 } from "./getTables.js";
 import { loginReports, databaseAuthReports } from "./authReports.js";
 
@@ -150,6 +149,18 @@ async function main() {
       return pilihKolomAnswer.action;
     }
 
+    async function pilihAgregasi() {
+      const pilihAgregasiQuestion = [
+        {
+          type: "list",
+          name: "action",
+          message: "Pilih Operasi Agregasi",
+          choices: ["Jumlah", "Hitung", "Rata-Rata", "Kembali"],
+        },
+      ];
+      const pilihAgregasiAnswer = await inquirer.prompt(pilihAgregasiQuestion);
+      return pilihAgregasiAnswer.action;
+    }
     // ==================End of Ngambil Data tabel (skema, nama tabel full, kolom)==============
 
     // PEMBAGIAN KERJA MULAI DI SINI
@@ -203,28 +214,31 @@ async function main() {
         console.log("Pilih Kolom Untuk Dikelompokkan");
         const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
 
-        generateGroupByReport(
-          dataTabel.namaTabelFull,
-          kolomAgregasi,
-          kolomKelompok,
-          pilihanAgregasi
+        const pilihLangkahBerikutnya = [
+          {
+            type: "list",
+            name: "action",
+            message: "Pilih Kolom",
+            choices: ["Filter Data", "Tampilkan Data"],
+          },
+        ];
+        const pilihLangkahBerikutnyaAnswer = await inquirer.prompt(
+          pilihLangkahBerikutnya
         );
-        endQuestion();
+        if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
+          generateGroupByReport(
+            dataTabel.namaTabelFull,
+            kolomAgregasi,
+            kolomKelompok,
+            pilihanAgregasi,
+            false
+          );
+          endQuestion();
+        } else {
+        }
       }
     }
 
-    async function pilihAgregasi() {
-      const pilihAgregasiQuestion = [
-        {
-          type: "list",
-          name: "action",
-          message: "Pilih Operasi Agregasi",
-          choices: ["Jumlah", "Hitung", "Rata-Rata", "Kembali"],
-        },
-      ];
-      const pilihAgregasiAnswer = await inquirer.prompt(pilihAgregasiQuestion);
-      return pilihAgregasiAnswer.action;
-    }
     // =======================================End of GROUP BY==========================================
 
     async function endQuestion() {
@@ -272,7 +286,6 @@ async function main() {
         endQuestion();
       }
     }
-  }
   } catch (error) {
     console.error("Error:", error.message);
   }
