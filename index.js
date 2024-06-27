@@ -148,6 +148,19 @@ async function main() {
       const pilihKolomAnswer = await inquirer.prompt(pilihKolomQuestion);
       return pilihKolomAnswer.action;
     }
+
+    async function pilihAgregasi() {
+      const pilihAgregasiQuestion = [
+        {
+          type: "list",
+          name: "action",
+          message: "Pilih Operasi Agregasi",
+          choices: ["Jumlah", "Hitung", "Rata-Rata", "Kembali"],
+        },
+      ];
+      const pilihAgregasiAnswer = await inquirer.prompt(pilihAgregasiQuestion);
+      return pilihAgregasiAnswer.action;
+    }
     // ==================End of Ngambil Data tabel (skema, nama tabel full, kolom)==============
 
     // PEMBAGIAN KERJA MULAI DI SINI
@@ -185,7 +198,8 @@ async function main() {
             dataTabel.namaTabelFull,
             kolomAgregasi,
             kolomKelompok,
-            pilihanAgregasi
+            pilihanAgregasi,
+            false
           );
           endQuestion();
         } else {
@@ -193,18 +207,6 @@ async function main() {
       }
     }
 
-    async function pilihAgregasi() {
-      const pilihAgregasiQuestion = [
-        {
-          type: "list",
-          name: "action",
-          message: "Pilih Operasi Agregasi",
-          choices: ["Jumlah", "Hitung", "Rata-Rata", "Kembali"],
-        },
-      ];
-      const pilihAgregasiAnswer = await inquirer.prompt(pilihAgregasiQuestion);
-      return pilihAgregasiAnswer.action;
-    }
     // =======================================End of GROUP BY==========================================
 
     async function endQuestion() {

@@ -7,27 +7,48 @@ export async function generateGroupByReport(
   namaTable,
   kolomAgregasi,
   kolomKelompok,
-  agregasi
+  agregasi,
+  isFilter
 ) {
   try {
     await sql.connect(sqlConfig);
     let result;
-    switch (agregasi) {
-      case "Jumlah":
-        result = await sql.query(`
-          SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-        `);
-        break;
-      case "Hitung":
-        result = await sql.query(`
-          SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-        `);
-        break;
-      case "Rata-Rata":
-        result = await sql.query(`
-          SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-        `);
-        break;
+    if (isFilter) {
+      switch (agregasi) {
+        case "Jumlah":
+          result = await sql.query(`
+            SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
+          `);
+          break;
+        case "Hitung":
+          result = await sql.query(`
+            SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
+          `);
+          break;
+        case "Rata-Rata":
+          result = await sql.query(`
+            SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
+          `);
+          break;
+      }
+    } else {
+      switch (agregasi) {
+        case "Jumlah":
+          result = await sql.query(`
+            SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
+          `);
+          break;
+        case "Hitung":
+          result = await sql.query(`
+            SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
+          `);
+          break;
+        case "Rata-Rata":
+          result = await sql.query(`
+            SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
+          `);
+          break;
+      }
     }
 
     console.log("\n Laporan berhasil dibuat!");
