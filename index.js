@@ -165,125 +165,125 @@ async function main() {
 
     // PEMBAGIAN KERJA MULAI DI SINI
     // PIVOTTT
-      async function getColumnPivot(){
-        const namaSkema = await selectTableSchema();
-        const dataTabel = await selectTableNames(namaSkema);
-        const sourceColumn = await pilihBanyakKolom(dataTabel.namaTabel);
-        const pilihanAgregasi = await pilihAgregasi();
-        const pivotColumn = await pilihKolom(dataTabel.namaTabel);
-        const pivotColumnDetail = await getColumnPivot(dataTabel.namaTabel,pivotColumn);
-        
-        if (pilihanAgregasi === "Kembali") getColumnPivot();
-        else{
-          console.log(`Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`);
-         let kolomAgregasi;
-         pilihanAgregasi === "Hitung"
-         ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
-         : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
-      
-        generatePivotReport(
-          dataTabel.namaTabelFULL,
-          kolomAgregasi,
-          sourceColumn,
-          pivotColumn,
-          pivotColumnDetail,
-          pilihanAgregasi,
-          
-        );
-        endQuestion();
-
-      }
-    // END PIVOTTT
-
-    async function tampilSemua(){
-      
-    }
-    // =======================================GROUP BY==========================================
-    async function groupBy() {
+    async function getColumnPivot() {
       const namaSkema = await selectTableSchema();
       const dataTabel = await selectTableNames(namaSkema);
+      const sourceColumn = await pilihBanyakKolom(dataTabel.namaTabel);
       const pilihanAgregasi = await pilihAgregasi();
+      const pivotColumn = await pilihKolom(dataTabel.namaTabel);
+      const pivotColumnDetail = await getColumnPivot(
+        dataTabel.namaTabel,
+        pivotColumn
+      );
 
-      if (pilihanAgregasi === "Kembali") groupBy();
+      if (pilihanAgregasi === "Kembali") getColumnPivot();
       else {
         console.log(`Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`);
         let kolomAgregasi;
         pilihanAgregasi === "Hitung"
           ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
           : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
-        console.log("Pilih Kolom Untuk Dikelompokkan");
-        const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
 
-        const pilihLangkahBerikutnya = [
+        generatePivotReport(
+          dataTabel.namaTabelFULL,
+          kolomAgregasi,
+          sourceColumn,
+          pivotColumn,
+          pivotColumnDetail,
+          pilihanAgregasi
+        );
+        endQuestion();
+      }
+      // END PIVOTTT
+
+      async function tampilSemua() {}
+      // =======================================GROUP BY==========================================
+      async function groupBy() {
+        const namaSkema = await selectTableSchema();
+        const dataTabel = await selectTableNames(namaSkema);
+        const pilihanAgregasi = await pilihAgregasi();
+
+        if (pilihanAgregasi === "Kembali") groupBy();
+        else {
+          console.log(`Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`);
+          let kolomAgregasi;
+          pilihanAgregasi === "Hitung"
+            ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
+            : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
+          console.log("Pilih Kolom Untuk Dikelompokkan");
+          const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
+
+          const pilihLangkahBerikutnya = [
+            {
+              type: "list",
+              name: "action",
+              message: "Pilih Kolom",
+              choices: ["Filter Data", "Tampilkan Data"],
+            },
+          ];
+          const pilihLangkahBerikutnyaAnswer = await inquirer.prompt(
+            pilihLangkahBerikutnya
+          );
+          if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
+            generateGroupByReport(
+              dataTabel.namaTabelFull,
+              kolomAgregasi,
+              kolomKelompok,
+              pilihanAgregasi,
+              false
+            );
+            endQuestion();
+          } else {
+          }
+        }
+      }
+
+      // =======================================End of GROUP BY==========================================
+
+      async function endQuestion() {
+        const endQuestions = [
           {
             type: "list",
             name: "action",
-            message: "Pilih Kolom",
-            choices: ["Filter Data", "Tampilkan Data"],
+            message: "Pilih Langkah Berikutnya",
+            choices: ["Export Data Ke Excel", "Kembali Menu Utama", "Keluar"],
           },
         ];
-        const pilihLangkahBerikutnyaAnswer = await inquirer.prompt(
-          pilihLangkahBerikutnya
-        );
-        if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
-          generateGroupByReport(
-            dataTabel.namaTabelFull,
-            kolomAgregasi,
-            kolomKelompok,
-            pilihanAgregasi,
-            false
-          );
-          endQuestion();
-        } else {
+
+        const endAnswer = await inquirer.prompt(endQuestions);
+
+        switch (endAnswer.action) {
+          case "Kembali Menu Utama":
+            menuAwal();
+            break;
+          case "Keluar":
+            console.log("Keluar Dari Aplikasi...");
+            process.exit(); // Keluar dari Aplikasi
         }
       }
-    }
 
-    // =======================================End of GROUP BY==========================================
-
-    async function endQuestion() {
-      const endQuestions = [
-        {
-          type: "list",
-          name: "action",
-          message: "Pilih Langkah Berikutnya",
-          choices: ["Export Data Ke Excel", "Kembali Menu Utama", "Keluar"],
-        },
-      ];
-
-      const endAnswer = await inquirer.prompt(endQuestions);
-
-      switch (endAnswer.action) {
-        case "Kembali Menu Utama":
-          menuAwal();
-          break;
-        case "Keluar":
-          console.log("Keluar Dari Aplikasi...");
-          process.exit(); // Keluar dari Aplikasi
-      }
-    }
-
-    async function laporanAutentikasi() {
-      const tingkatAutentikasiQuestions = [
-        {
-          type: "list",
-          name: "action",
-          message: "Pilih Tingkat Autentikasi: ",
-          choices: [
-            "Login / Server (Login ke SQL Server di SSMS/Azure terlebih dahulu)",
-            "Database",
-          ],
-        },
-      ];
-      const tingkatAutentikasiAnswer = await inquirer.prompt(
-        tingkatAutentikasiQuestions
-      );
-      if (tingkatAutentikasiAnswer.action === "Database") {
-        await databaseAuthReports();
-        endQuestion();
-      } else {
-        await loginReports();
-        endQuestion();
+      async function laporanAutentikasi() {
+        const tingkatAutentikasiQuestions = [
+          {
+            type: "list",
+            name: "action",
+            message: "Pilih Tingkat Autentikasi: ",
+            choices: [
+              "Login / Server (Login ke SQL Server di SSMS/Azure terlebih dahulu)",
+              "Database",
+            ],
+          },
+        ];
+        const tingkatAutentikasiAnswer = await inquirer.prompt(
+          tingkatAutentikasiQuestions
+        );
+        if (tingkatAutentikasiAnswer.action === "Database") {
+          await databaseAuthReports();
+          endQuestion();
+        } else {
+          await loginReports();
+          endQuestion();
+        }
       }
     }
   } catch (error) {
