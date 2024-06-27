@@ -33,6 +33,7 @@ async function main() {
           message: "Menu Utama",
           choices: [
             "Kelompokkan Berdasarkan Kolom",
+            "Pivot Data",
             "Lihat Semua Data",
             "Laporan Autentikasi",
             "Keluar",
@@ -50,6 +51,9 @@ async function main() {
           // await generateSalesReport(); // Output will be displayed in terminal
           // await exportSalesReportToExcel();
           // console.log("Report has been exported successfully.");
+          break;
+        case "Pivot Data":
+          getColumnPivot();
 
           break;
         case "Lihat Semua Data":
@@ -164,7 +168,7 @@ async function main() {
     // ==================End of Ngambil Data tabel (skema, nama tabel full, kolom)==============
 
     // PEMBAGIAN KERJA MULAI DI SINI
-    // PIVOTTT
+    // PIVOTTT---------------------------------------------------------------------------------
     async function getColumnPivot() {
       const namaSkema = await selectTableSchema();
       const dataTabel = await selectTableNames(namaSkema);
@@ -195,7 +199,7 @@ async function main() {
         endQuestion();
       }
     }
-    // END PIVOTTT
+    // END PIVOTTT------------------------------------------------------------------------------
 
     async function tampilSemua() {}
     // =======================================GROUP BY==========================================
