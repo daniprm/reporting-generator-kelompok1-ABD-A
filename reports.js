@@ -87,3 +87,8 @@ export async function generateGroupByReport(
     throw error;
   }
 }
+export async function generatePivotReport(
+  //Variable from index
+){
+  //Case to operate on variable
+}
