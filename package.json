@@ -1,12 +1,13 @@
 {
-  "name": "fp",
+  "name": "Reporting Generator Kelompok 1 ABD",
   "version": "1.0.0",
   "type": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
+  "bin": "index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -17,5 +18,12 @@
     "inquirer": "^9.2.23",
     "jsonwebtoken": "^9.0.2",
     "mssql": "^11.0.0"
+  },
+  "pkg": {
+    "scripts": "index.js",
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
   }
 }

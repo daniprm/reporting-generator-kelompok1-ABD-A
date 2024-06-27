@@ -223,7 +223,7 @@ async function main() {
           {
             type: "list",
             name: "action",
-            message: "Pilih Kolom",
+            message: "Pilih Salah Satu",
             choices: ["Filter Data", "Tampilkan Data"],
           },
         ];
