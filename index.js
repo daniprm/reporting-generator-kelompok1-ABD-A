@@ -1,6 +1,6 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
-import { exportSalesReportToExcel } from "./exportExcel.js";
+import { exportLaporanToExcel } from "./exportExcel.js";
 import { generateGroupByReport } from "./reports.js";
 import {
   getTableSchema,
@@ -9,6 +9,7 @@ import {
   getColumnsAngka,
 } from "./getTables.js";
 import { loginReports, databaseAuthReports } from "./authReports.js";
+import dayjs from "dayjs";
 
 async function main() {
   console.log("Masukkan data untuk autentikasi database: ");
@@ -226,14 +227,18 @@ async function main() {
           pilihLangkahBerikutnya
         );
         if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
-          generateGroupByReport(
+          const hasil = await generateGroupByReport(
             dataTabel.namaTabelFull,
             kolomAgregasi,
             kolomKelompok,
             pilihanAgregasi,
             false
           );
-          endQuestion();
+          const namaLaporan = `Laporan ${pilihanAgregasi} ${kolomAgregasi} Tabel ${
+            dataTabel.namaTabel
+          } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
+
+          endQuestion(hasil, namaLaporan);
         } else {
         }
       }
@@ -241,7 +246,7 @@ async function main() {
 
     // =======================================End of GROUP BY==========================================
 
-    async function endQuestion() {
+    async function endQuestion(dataHasil, namaLaporan) {
       const endQuestions = [
         {
           type: "list",
@@ -256,6 +261,9 @@ async function main() {
       switch (endAnswer.action) {
         case "Kembali Menu Utama":
           menuAwal();
+          break;
+        case "Export Data Ke Excel":
+          exportLaporanToExcel(dataHasil, namaLaporan);
           break;
         case "Keluar":
           console.log("Keluar Dari Aplikasi...");
