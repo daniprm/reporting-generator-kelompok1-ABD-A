@@ -175,6 +175,7 @@ async function main() {
           kolomAgregasi,
           sourceColumn,
           pivotColumn,
+          pivotColumnDetail,
           pilihanAgregasi,
           
         );
