@@ -5,25 +5,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "build": "nexe index.js --target windows-x64-18.18.2 -o dist/ReportingGenerator.exe --build"
   },
-  "bin": "index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "cli-table3": "^0.6.5",
     "exceljs": "^4.4.0",
     "inquirer": "^9.2.23",
     "jsonwebtoken": "^9.0.2",
     "mssql": "^11.0.0"
   },
-  "pkg": {
-    "scripts": "index.js",
-    "targets": [
-      "node18-win-x64"
-    ],
-    "outputPath": "dist"
-  }
+  "nexe": {
+    "input": "index.js",
+    "output": "dist/ReportingGenerator.exe",
+    "target": "windows-x64-18.18.2"
+  },
+  "bin": "./index.js"
 }
