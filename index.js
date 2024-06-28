@@ -1,11 +1,7 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
-import { exportLaporanToExcel } from "./exportExcel.js";
-import {
-  generateGroupByReport,
-  generateFilterReport,
-  generateTableReport,
-} from "./reports.js";
+import { exportSalesReportToExcel } from "./exportExcel.js";
+import { generateGroupByReport } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
@@ -13,7 +9,6 @@ import {
   getColumnsAngka,
 } from "./getTables.js";
 import { loginReports, databaseAuthReports } from "./authReports.js";
-import dayjs from "dayjs";
 
 async function main() {
   console.log("Masukkan data untuk autentikasi database: ");
@@ -37,10 +32,9 @@ async function main() {
           name: "action",
           message: "Menu Utama",
           choices: [
-            "Lihat Semua Data",
             "Kelompokkan Berdasarkan Kolom",
             "Pivot Data",
-            "Filter Data",
+            "Lihat Semua Data",
             "Laporan Autentikasi",
             "Keluar",
           ],
@@ -53,13 +47,13 @@ async function main() {
       switch (mainAnswers.action) {
         case "Kelompokkan Berdasarkan Kolom":
           groupBy();
+          // console.log("Generating report...");
+          // await generateSalesReport(); // Output will be displayed in terminal
+          // await exportSalesReportToExcel();
+          // console.log("Report has been exported successfully.");
           break;
         case "Pivot Data":
           getColumnPivot();
-
-          break;
-        case "Filter Data":
-          applyFilter();
 
           break;
         case "Lihat Semua Data":
@@ -71,12 +65,12 @@ async function main() {
           break;
         case "Keluar":
           console.log("Keluar Dari Aplikasi...");
-          process.exit();
+          process.exit(); // Keluar dari Aplikasi
       }
     }
     // ==================End Of Menu Awal=========================
 
-    // ==================Ngambil Data tabel (skema, nama tabel full, kolom)==============
+    // ==================Ngambil Data tabel (skema & nama tabel full)==============
     async function selectTableSchema() {
       const selectTableSchemaQuestions = [
         {
@@ -123,21 +117,14 @@ async function main() {
           name: "dataKolom",
           message: "Pilih Kolom",
           choices: [...(await getColumns(namaTabel))],
-          validate: function (answer) {
-            if (answer.length < 1) {
-              return "Anda harus memilih setidaknya satu opsi.";
-            }
-            return true;
-          },
         },
       ];
 
       const banyakKolomAnswers = await inquirer.prompt(banyakKolomQuestion);
+
       let kolomHasil = "";
-
-      banyakKolomAnswers.dataKolom.forEach((res) => (kolomHasil += res + ","));
-      kolomHasil = kolomHasil.slice(0, -1);
-
+      banyakKolomAnswers.dataKolom.forEach((res) => (kolomHasil += res + ", "));
+      console.log(kolomHasil);
       return kolomHasil;
     }
 
@@ -201,215 +188,20 @@ async function main() {
           ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
           : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
 
-        const hasil = await generatePivotReport(
-          dataTabel.namaTabelFULL,
+        generatePivotReport(
+          dataTabel,
           kolomAgregasi,
           sourceColumn,
           pivotColumn,
           pivotColumnDetail,
           pilihanAgregasi
         );
-        const namaLaporan = `Laporan Pivot Kolom ${sourceColumn} Dan ${pivotColumn} Tabel ${
-          dataTabel.namaTabel
-        } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
-        endQuestion(hasil, namaLaporan);
+        endQuestion();
       }
     }
     // END PIVOTTT------------------------------------------------------------------------------
 
-    async function tampilSemua() {
-      const namaSkema = await selectTableSchema();
-      const dataTabel = await selectTableNames(namaSkema);
-
-      console.log("Pilih Kolom Untuk Ditampilkan");
-      const kolomTampil = await pilihBanyakKolom(dataTabel.namaTabel);
-      const pilihBaris = [
-        {
-          type: "list",
-          name: "action",
-          message: "Pilih Jumlah Baris Teratas yang Ingin ditampilkan",
-          choices: ["5", "10", "100", "Semua Baris", "Input Lainnya"],
-        },
-      ];
-
-      const pilihBarisAnswer = await inquirer.prompt(pilihBaris);
-      if (pilihBarisAnswer.action === "Input Lainnya") {
-        const inputBarisTampil = [
-          {
-            type: "input",
-            name: "action",
-            message: "Masukkan Jumlah Baris yang Ingin ditampilkan:",
-            validate: function (value) {
-              const valid = !isNaN(parseFloat(value));
-              return valid || "Silakan masukkan angka yang valid";
-            },
-          },
-        ];
-        const inputBarisTampilAnswer = await inquirer.prompt(inputBarisTampil);
-        const hasil = await generateTableReport(
-          dataTabel.namaTabelFull,
-          kolomTampil,
-          inputBarisTampilAnswer.action
-        );
-
-        endQuestion(
-          hasil,
-          `Laporan Tabel ${dataTabel.namaTabel} ${dayjs().format(
-            "DD MMM YYYY (hh.mm A)"
-          )}`
-        );
-      } else {
-        const hasil = await generateTableReport(
-          dataTabel.namaTabelFull,
-          kolomTampil,
-          pilihBarisAnswer.action
-        );
-        endQuestion(
-          hasil,
-          `Laporan Tabel ${dataTabel.namaTabel} ${dayjs().format(
-            "DD MMM YYYY (hh.mm A)"
-          )}`
-        );
-      }
-    }
-
-    // =======================================FILTER DATA==========================================
-    async function promptNumberOfConditions() {
-      const answers = await inquirer.prompt([
-        {
-          type: "input",
-          name: "count",
-          message:
-            "Masukkan jumlah kondisi yang ingin Anda gunakan (1, 2, atau 3):",
-          validate: function (value) {
-            var valid =
-              !isNaN(parseFloat(value)) &&
-              parseInt(value) >= 1 &&
-              parseInt(value) <= 3;
-            return valid || "Masukkan angka yang valid antara 1 dan 3!";
-          },
-          filter: Number,
-        },
-      ]);
-      return answers.count;
-    }
-
-    async function applyFilter() {
-      const schema = await selectTableSchema();
-      const tableData = await selectTableNames(schema);
-
-      if (tableData.namaTabel === "Kembali") {
-        return applyFilter(); // Panggil ulang fungsi jika pengguna memilih "Kembali"
-      }
-
-      console.log("Pilih kolom yang akan ditampilkan:");
-      const displayColumns = await pilihBanyakKolom(tableData.namaTabel);
-      if (!displayColumns) {
-        console.log(
-          "No columns selected for display. Exiting filter application."
-        );
-        return;
-      }
-
-      console.log("Pilih kolom untuk difilter:");
-      const filterColumn = await pilihKolom(tableData.namaTabel);
-      const isNumericColumn = await getColumnsAngka(tableData.namaTabel);
-
-      const numberOfConditions = await promptNumberOfConditions(); // Meminta jumlah kondisi
-      const conditions = [];
-
-      for (let i = 0; i < numberOfConditions; i++) {
-        console.log(`Pilih kondisi ke-${i + 1}:`);
-        const text = await inquirer.prompt([
-          {
-            type: "input",
-            name: "text",
-            message: `Masukkan teks yang akan ditampilkan untuk kondisi ${
-              i + 1
-            }:`,
-          },
-        ]);
-
-        if (isNumericColumn.includes(filterColumn)) {
-          console.log(`Pilih tipe filter untuk kolom ${filterColumn}:`);
-          const { filterType, condition } = await promptNumericFilter();
-          conditions.push({
-            type: "numeric",
-            filterType,
-            condition,
-            text: text.text,
-          });
-        } else {
-          const condition = await promptTextFilter();
-          conditions.push({
-            type: "text",
-            condition,
-            filterType: "LIKE",
-            text: text.text,
-          });
-        }
-      }
-
-      const elseText = await inquirer.prompt([
-        {
-          type: "input",
-          name: "elseText",
-          message:
-            "Masukkan teks yang akan ditampilkan jika tidak ada kondisi yang terpenuhi:",
-        },
-      ]);
-
-      const hasil = await generateFilterReport(
-        tableData.namaTabelFull,
-        displayColumns,
-        filterColumn,
-        conditions,
-        elseText.elseText
-      );
-      console.log("Laporan berhasil dibuat.");
-      const namaLaporan = `Laporan Filter Kolom ${filterColumn} Tabel ${
-        tableData.namaTabel
-      } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
-
-      // Tanyakan langkah berikutnya
-      endQuestion(hasil, namaLaporan);
-    }
-
-    async function promptNumericFilter() {
-      const answers = await inquirer.prompt([
-        {
-          type: "list",
-          name: "filterType",
-          message: "Pilih kondisi filter numerik:",
-          choices: [
-            { name: "Equals", value: "=" },
-            { name: "Greater than", value: ">" },
-            { name: "Less than", value: "<" },
-          ],
-        },
-        {
-          type: "input",
-          name: "condition",
-          message: "Masukkan nilai untuk kondisi:",
-        },
-      ]);
-      return answers;
-    }
-
-    async function promptTextFilter() {
-      const answer = await inquirer.prompt([
-        {
-          type: "input",
-          name: "condition",
-          message:
-            "Masukkan kata kunci untuk filtering (akan menggunakan LIKE):",
-        },
-      ]);
-      return answer.condition;
-    }
-
-    // =======================================END OF FILTER DATA==========================================
-
+    async function tampilSemua() {}
     // =======================================GROUP BY==========================================
     async function groupBy() {
       const namaSkema = await selectTableSchema();
@@ -424,109 +216,42 @@ async function main() {
           ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
           : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
         console.log("Pilih Kolom Untuk Dikelompokkan");
-        const kolomKelompok = await pilihBanyakKolom(dataTabel.namaTabel);
+        const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
 
         const pilihLangkahBerikutnya = [
           {
             type: "list",
             name: "action",
-            message: "Pilih Salah Satu",
-            choices: ["Tampilkan Data", "Filter Hasil Agregasi"],
+            message: "Pilih Kolom",
+            choices: ["Filter Data", "Tampilkan Data"],
           },
         ];
         const pilihLangkahBerikutnyaAnswer = await inquirer.prompt(
           pilihLangkahBerikutnya
         );
-
-        const namaLaporan = `Laporan ${pilihanAgregasi} ${kolomAgregasi} Tabel ${
-          dataTabel.namaTabel
-        } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
         if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
-          const hasil = await generateGroupByReport(
+          generateGroupByReport(
             dataTabel.namaTabelFull,
             kolomAgregasi,
             kolomKelompok,
             pilihanAgregasi,
-            0,
-            "=",
-            "0",
-            "",
-            ""
+            false
           );
-
-          endQuestion(hasil, namaLaporan);
+          endQuestion();
         } else {
-          const pilihOperator = [
-            {
-              type: "list",
-              name: "action",
-              message: "Pilih Salah Satu",
-              choices: [">", "<", "<=", ">=", "="],
-            },
-          ];
-          const pilihOperatorAnswer = await inquirer.prompt(pilihOperator);
-          const masukkanDataKondisi = [
-            {
-              type: "input",
-              name: "action",
-              message: "Masukkan angka untuk operasi filter:",
-              validate: function (value) {
-                const valid = !isNaN(parseFloat(value));
-                return valid || "Silakan masukkan angka yang valid";
-              },
-            },
-          ];
-          const masukkanDataKondisiAnswer = await inquirer.prompt(
-            masukkanDataKondisi
-          );
-          const teksHasilFilter = [
-            {
-              type: "input",
-              name: "action",
-              message: "Masukkan teks hasil filter jika memenuhi kondisi:",
-            },
-          ];
-          const teksHasilFilterAnswer = await inquirer.prompt(teksHasilFilter);
-          const teksBukanFilter = [
-            {
-              type: "input",
-              name: "action",
-              message:
-                "Masukkan teks hasil filter jika tidak memenuhi kondisi:",
-            },
-          ];
-          const teksBukanFilterAnswer = await inquirer.prompt(teksBukanFilter);
-
-          const hasil = await generateGroupByReport(
-            dataTabel.namaTabelFull,
-            kolomAgregasi,
-            kolomKelompok,
-            pilihanAgregasi,
-            1,
-            pilihOperatorAnswer.action,
-            masukkanDataKondisiAnswer.action,
-            teksHasilFilterAnswer.action,
-            teksBukanFilterAnswer.action
-          );
-
-          endQuestion(hasil, namaLaporan);
         }
       }
     }
 
     // =======================================End of GROUP BY==========================================
 
-    async function endQuestion(dataHasil, namaLaporan) {
+    async function endQuestion() {
       const endQuestions = [
         {
           type: "list",
           name: "action",
           message: "Pilih Langkah Berikutnya",
-          choices: [
-            "Export Data Ke Excel Untuk Melihat Selengkapnya",
-            "Kembali Menu Utama",
-            "Keluar",
-          ],
+          choices: ["Export Data Ke Excel", "Kembali Menu Utama", "Keluar"],
         },
       ];
 
@@ -534,10 +259,6 @@ async function main() {
 
       switch (endAnswer.action) {
         case "Kembali Menu Utama":
-          menuAwal();
-          break;
-        case "Export Data Ke Excel Untuk Melihat Selengkapnya":
-          await exportLaporanToExcel(dataHasil, namaLaporan);
           menuAwal();
           break;
         case "Keluar":
@@ -562,26 +283,15 @@ async function main() {
         tingkatAutentikasiQuestions
       );
       if (tingkatAutentikasiAnswer.action === "Database") {
-        const hasil = await databaseAuthReports();
-        endQuestion(
-          hasil,
-          `Laporan Autentikasi Database ${dayjs().format(
-            "DD MMM YYYY (hh.mm A)"
-          )}`
-        );
+        await databaseAuthReports();
+        endQuestion();
       } else {
-        const hasil = await loginReports();
-        endQuestion(
-          hasil,
-          `Laporan Autentikasi Login (Server) ${dayjs().format(
-            "DD MMM YYYY (hh.mm A)"
-          )}`
-        );
+        await loginReports();
+        endQuestion();
       }
     }
   } catch (error) {
     console.error("Error:", error.message);
-    main();
   }
 }
 

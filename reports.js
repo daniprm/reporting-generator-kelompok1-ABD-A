@@ -1,5 +1,6 @@
 import sql from "mssql";
 import { sqlConfig } from "./config.js";
+import { getPivotColumnDetail } from "./getTables.js";
 import util from "util";
 import Table from "cli-table3";
 
@@ -189,9 +190,66 @@ export async function generateTableReport(namaTable, kolomTampil, jumlahBaris) {
     throw error;
   }
 }
-export async function generatePivotReport() {
-  //Variable from index
-  //Case to operate on variable
+export async function generatePivotReport(
+    dataTabel,
+    kolomAgregasi,
+    sourceColumn,
+    pivotColumn,
+    pivotColumnDetail,
+    pilihanAgregasi
+){
+  try{
+    let result = ''
+    switch(pilihanAgregasi) {
+      case 'Jumlah':
+        await sql.connect(sqlConfig);
+        result = await sql.query(`
+          SELECT *
+          FROM (
+            SELECT --- FROM ${dataTabel}
+          )AS Src
+          PIVOT(
+            SUM(${kolomAgregasi})
+            FOR ${pivotColumn} IN (---)
+          )AS Pvt
+        `)
+        break;
+      case 'Hitung':
+        await sql.connect(sqlConfig);
+        result = await sql.query(`
+          SELECT *
+          FROM (
+            SELECT --- FROM ${dataTabel}
+          )AS Src
+          PIVOT(
+            COUNT(${kolomAgregasi})
+            FOR ${pivotColumn} IN (---)
+          )AS Pvt
+          `)
+        break;
+      case 'Rata-rata':
+        await sql.connect(sqlConfig);
+        result = await sql.query(`
+          SELECT *
+          FROM (
+            SELECT --- FROM ${dataTabel}
+          )AS Src
+          PIVOT(
+            AVG(${kolomAgregasi})
+            FOR ${pivotColumn} IN (---)
+          
+          )AS Pvt
+          `)
+        break;
+      default:
+      
+      return result
+    }
+
+  }catch(error){
+    console.error("Error generating report:", error);
+    throw error;
+  }
 }
 
 export async function generateFilterReport(
