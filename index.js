@@ -33,11 +33,11 @@ async function main() {
           name: "action",
           message: "Menu Utama",
           choices: [
+            "Lihat Semua Data",
             "Kelompokkan Berdasarkan Kolom",
             "Pivot Data",
-            "Lihat Semua Data",
-            "Laporan Autentikasi",
             "Filter Data",
+            "Laporan Autentikasi",
             "Keluar",
           ],
         },
@@ -49,17 +49,13 @@ async function main() {
       switch (mainAnswers.action) {
         case "Kelompokkan Berdasarkan Kolom":
           groupBy();
-          // console.log("Generating report...");
-          // await generateSalesReport(); // Output will be displayed in terminal
-          // await exportSalesReportToExcel();
-          // console.log("Report has been exported successfully.");
           break;
         case "Pivot Data":
           getColumnPivot();
 
           break;
-          case "Filter Data":
-            applyFilter();
+        case "Filter Data":
+          applyFilter();
 
           break;
         case "Lihat Semua Data":
@@ -71,12 +67,12 @@ async function main() {
           break;
         case "Keluar":
           console.log("Keluar Dari Aplikasi...");
-          process.exit(); // Keluar dari Aplikasi
+          process.exit();
       }
     }
     // ==================End Of Menu Awal=========================
 
-    // ==================Ngambil Data tabel (skema & nama tabel full)==============
+    // ==================Ngambil Data tabel (skema, nama tabel full, kolom)==============
     async function selectTableSchema() {
       const selectTableSchemaQuestions = [
         {
@@ -129,8 +125,8 @@ async function main() {
       const banyakKolomAnswers = await inquirer.prompt(banyakKolomQuestion);
 
       let kolomHasil = "";
-      banyakKolomAnswers.dataKolom.forEach((res) => (kolomHasil += res + ", "));
-      console.log(kolomHasil);
+      banyakKolomAnswers.dataKolom.forEach((res) => (kolomHasil += res + ","));
+      kolomHasil = kolomHasil.slice(0, -1);
       return kolomHasil;
     }
 
@@ -194,7 +190,7 @@ async function main() {
           ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
           : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
 
-        generatePivotReport(
+        const hasil = await generatePivotReport(
           dataTabel.namaTabelFULL,
           kolomAgregasi,
           sourceColumn,
@@ -202,7 +198,10 @@ async function main() {
           pivotColumnDetail,
           pilihanAgregasi
         );
-        endQuestion();
+        const namaLaporan = `Laporan Pivot Kolom ${sourceColumn} Dan ${pivotColumn} Tabel ${
+          dataTabel.namaTabel
+        } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
+        endQuestion(hasil, namaLaporan);
       }
     }
     // END PIVOTTT------------------------------------------------------------------------------
@@ -213,109 +212,137 @@ async function main() {
     async function promptNumberOfConditions() {
       const answers = await inquirer.prompt([
         {
-          type: 'input',
-          name: 'count',
-          message: 'Masukkan jumlah kondisi yang ingin Anda gunakan (1, 2, atau 3):',
+          type: "input",
+          name: "count",
+          message:
+            "Masukkan jumlah kondisi yang ingin Anda gunakan (1, 2, atau 3):",
           validate: function (value) {
-            var valid = !isNaN(parseFloat(value)) && parseInt(value) >= 1 && parseInt(value) <= 3;
-            return valid || 'Masukkan angka yang valid antara 1 dan 3!';
+            var valid =
+              !isNaN(parseFloat(value)) &&
+              parseInt(value) >= 1 &&
+              parseInt(value) <= 3;
+            return valid || "Masukkan angka yang valid antara 1 dan 3!";
           },
-          filter: Number
-        }
+          filter: Number,
+        },
       ]);
       return answers.count;
-    }    
-    
+    }
+
     async function applyFilter() {
       const schema = await selectTableSchema();
       const tableData = await selectTableNames(schema);
-    
+
       if (tableData.namaTabel === "Kembali") {
         return applyFilter(); // Panggil ulang fungsi jika pengguna memilih "Kembali"
       }
-    
+
       console.log("Pilih kolom yang akan ditampilkan:");
       const displayColumns = await pilihBanyakKolom(tableData.namaTabel);
       if (!displayColumns) {
-        console.log('No columns selected for display. Exiting filter application.');
+        console.log(
+          "No columns selected for display. Exiting filter application."
+        );
         return;
       }
-    
+
       console.log("Pilih kolom untuk difilter:");
       const filterColumn = await pilihKolom(tableData.namaTabel);
       const isNumericColumn = await getColumnsAngka(tableData.namaTabel);
-    
+
       const numberOfConditions = await promptNumberOfConditions(); // Meminta jumlah kondisi
       const conditions = [];
-    
+
       for (let i = 0; i < numberOfConditions; i++) {
         console.log(`Pilih kondisi ke-${i + 1}:`);
         const text = await inquirer.prompt([
           {
-            type: 'input',
-            name: 'text',
-            message: `Masukkan teks yang akan ditampilkan untuk kondisi ${i + 1}:`
-          }
+            type: "input",
+            name: "text",
+            message: `Masukkan teks yang akan ditampilkan untuk kondisi ${
+              i + 1
+            }:`,
+          },
         ]);
-    
+
         if (isNumericColumn.includes(filterColumn)) {
           console.log(`Pilih tipe filter untuk kolom ${filterColumn}:`);
           const { filterType, condition } = await promptNumericFilter();
-          conditions.push({ type: 'numeric', filterType, condition, text: text.text });
+          conditions.push({
+            type: "numeric",
+            filterType,
+            condition,
+            text: text.text,
+          });
         } else {
           const condition = await promptTextFilter();
-          conditions.push({ type: 'text', condition, filterType: 'LIKE', text: text.text });
+          conditions.push({
+            type: "text",
+            condition,
+            filterType: "LIKE",
+            text: text.text,
+          });
         }
       }
-    
+
       const elseText = await inquirer.prompt([
         {
-          type: 'input',
-          name: 'elseText',
-          message: 'Masukkan teks yang akan ditampilkan jika tidak ada kondisi yang terpenuhi:'
-        }
+          type: "input",
+          name: "elseText",
+          message:
+            "Masukkan teks yang akan ditampilkan jika tidak ada kondisi yang terpenuhi:",
+        },
       ]);
-    
-      await generateFilterReport(tableData.namaTabelFull, displayColumns, filterColumn, conditions, elseText.elseText);
-      console.log('Filter applied and report generated.');
-    
+
+      const hasil = await generateFilterReport(
+        tableData.namaTabelFull,
+        displayColumns,
+        filterColumn,
+        conditions,
+        elseText.elseText
+      );
+      console.log("Laporan berhasil dibuat.");
+      const namaLaporan = `Laporan Filter Kolom ${filterColumn} Tabel ${
+        tableData.namaTabel
+      } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
+
       // Tanyakan langkah berikutnya
-      endQuestion();
-    }    
-    
+      endQuestion(hasil, namaLaporan);
+    }
+
     async function promptNumericFilter() {
       const answers = await inquirer.prompt([
         {
-          type: 'list',
-          name: 'filterType',
-          message: 'Pilih kondisi filter numerik:',
+          type: "list",
+          name: "filterType",
+          message: "Pilih kondisi filter numerik:",
           choices: [
-            { name: 'Equals', value: '=' },
-            { name: 'Greater than', value: '>' },
-            { name: 'Less than', value: '<' },
+            { name: "Equals", value: "=" },
+            { name: "Greater than", value: ">" },
+            { name: "Less than", value: "<" },
           ],
         },
         {
-          type: 'input',
-          name: 'condition',
-          message: 'Masukkan nilai untuk kondisi:',
+          type: "input",
+          name: "condition",
+          message: "Masukkan nilai untuk kondisi:",
         },
       ]);
       return answers;
-    }        
-    
+    }
+
     async function promptTextFilter() {
       const answer = await inquirer.prompt([
         {
-          type: 'input',
-          name: 'condition',
-          message: 'Masukkan kata kunci untuk filtering (akan menggunakan LIKE):'
-        }
+          type: "input",
+          name: "condition",
+          message:
+            "Masukkan kata kunci untuk filtering (akan menggunakan LIKE):",
+        },
       ]);
       return answer.condition;
     }
-    
-    
+
     // =======================================END OF FILTER DATA==========================================
 
     // =======================================GROUP BY==========================================
@@ -332,7 +359,7 @@ async function main() {
           ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
           : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
         console.log("Pilih Kolom Untuk Dikelompokkan");
-        const kolomKelompok = await pilihKolom(dataTabel.namaTabel);
+        const kolomKelompok = await pilihBanyakKolom(dataTabel.namaTabel);
 
         const pilihLangkahBerikutnya = [
           {
@@ -371,7 +398,11 @@ async function main() {
           type: "list",
           name: "action",
           message: "Pilih Langkah Berikutnya",
-          choices: ["Export Data Ke Excel", "Kembali Menu Utama", "Keluar"],
+          choices: [
+            "Export Data Ke Excel Untuk Melihat Selengkapnya",
+            "Kembali Menu Utama",
+            "Keluar",
+          ],
         },
       ];
 
@@ -381,7 +412,7 @@ async function main() {
         case "Kembali Menu Utama":
           menuAwal();
           break;
-        case "Export Data Ke Excel":
+        case "Export Data Ke Excel Untuk Melihat Selengkapnya":
           exportLaporanToExcel(dataHasil, namaLaporan);
           break;
         case "Keluar":
@@ -415,6 +446,7 @@ async function main() {
     }
   } catch (error) {
     console.error("Error:", error.message);
+    main();
   }
 }
 
