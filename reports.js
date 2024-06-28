@@ -8,50 +8,143 @@ export async function generateGroupByReport(
   kolomAgregasi,
   kolomKelompok,
   agregasi,
-  isFilter
+  isFilter,
+  operator,
+  dataKondisi,
+  teksHasilKondisi,
+  elseTeks
 ) {
   try {
     await sql.connect(sqlConfig);
-    let result;
-    if (isFilter) {
-      switch (agregasi) {
-        case "Jumlah":
-          result = await sql.query(`
-            SELECT ${kolomKelompok} SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok} ''
-          `);
-          break;
-        case "Hitung":
-          result = await sql.query(`
-            SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-          `);
-          break;
-        case "Rata-Rata":
-          result = await sql.query(`
-            SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-          `);
-          break;
-      }
-    } else {
-      switch (agregasi) {
-        case "Jumlah":
-          result = await sql.query(`
-            SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-          `);
-          break;
-        case "Hitung":
-          result = await sql.query(`
-            SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-          `);
-          break;
-        case "Rata-Rata":
-          result = await sql.query(`
-            SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-          `);
-          break;
-      }
-    }
+    let result = await sql.query(`
+      BEGIN
+        DECLARE @isFilter BIT = '${isFilter}'
+        DECLARE @agregasi varchar(10) = '${agregasi}'
+        DECLARE @operator varchar(2) = '${operator}'
+        DECLARE @dataKondisi float = ${dataKondisi}
+        DECLARE @teksHasilKondisi varchar(255) = '${teksHasilKondisi}'
+        DECLARE @elseTeks varchar(255) = '${elseTeks}'
 
-    console.log("\n Laporan berhasil dibuat!");
+        IF @isFilter = 1
+        BEGIN
+          SELECT ${kolomKelompok}, 
+          CASE 
+            WHEN @agregasi = 'Hitung' THEN COUNT(${kolomAgregasi})
+            WHEN @agregasi = 'Jumlah' THEN SUM(${kolomAgregasi})
+            WHEN @agregasi = 'Rata-Rata' THEN AVG(${kolomAgregasi})
+          END AS 'Hasil ${agregasi}',
+          CASE
+            WHEN @operator = '>' THEN 
+              CASE 
+                WHEN @agregasi = 'Hitung' THEN
+                  CASE
+                    WHEN COUNT(${kolomAgregasi}) > @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Jumlah' THEN
+                  CASE
+                    WHEN SUM(${kolomAgregasi}) > @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Rata-Rata' THEN
+                  CASE
+                    WHEN AVG(${kolomAgregasi}) > @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+              END
+
+            WHEN @operator = '<' THEN 
+              CASE 
+                WHEN @agregasi = 'Hitung' THEN
+                  CASE
+                    WHEN COUNT(${kolomAgregasi}) < @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Jumlah' THEN
+                  CASE
+                    WHEN SUM(${kolomAgregasi}) < @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Rata-Rata' THEN
+                  CASE
+                    WHEN AVG(${kolomAgregasi}) < @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+              END
+            WHEN @operator = '=' THEN 
+              CASE 
+                WHEN @agregasi = 'Hitung' THEN
+                  CASE
+                    WHEN COUNT(${kolomAgregasi}) = @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Jumlah' THEN
+                  CASE
+                    WHEN SUM(${kolomAgregasi}) = @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Rata-Rata' THEN
+                  CASE
+                    WHEN AVG(${kolomAgregasi}) = @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+              END
+            WHEN @operator = '>=' THEN 
+              CASE 
+                WHEN @agregasi = 'Hitung' THEN
+                  CASE
+                    WHEN COUNT(${kolomAgregasi}) >= @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Jumlah' THEN
+                  CASE
+                    WHEN SUM(${kolomAgregasi}) >= @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Rata-Rata' THEN
+                  CASE
+                    WHEN AVG(${kolomAgregasi}) >= @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+              END
+            WHEN @operator = '<=' THEN 
+              CASE 
+                WHEN @agregasi = 'Hitung' THEN
+                  CASE
+                    WHEN COUNT(${kolomAgregasi}) <= @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Jumlah' THEN
+                  CASE
+                    WHEN SUM(${kolomAgregasi}) <= @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+                WHEN @agregasi = 'Rata-Rata' THEN
+                  CASE
+                    WHEN AVG(${kolomAgregasi}) <= @dataKondisi THEN @teksHasilKondisi
+                    ELSE @elseTeks
+                  END
+              END
+          END AS 'Hasil Filter'
+          FROM ${namaTable}
+          GROUP BY ${kolomKelompok};
+        END
+        
+        ELSE
+        BEGIN
+          SELECT ${kolomKelompok}, 
+          CASE 
+            WHEN @agregasi = 'Hitung' THEN COUNT(${kolomAgregasi})
+            WHEN @agregasi = 'Jumlah' THEN SUM(${kolomAgregasi})
+            WHEN @agregasi = 'Rata-Rata' THEN AVG(${kolomAgregasi})
+          END AS 'Hasil ${agregasi}'
+          FROM ${namaTable}
+          GROUP BY ${kolomKelompok};
+        END
+      END
+      `);
+
+    console.log("\n Laporan berhasil dibuat.");
 
     // console.log("======================================");
 
@@ -119,7 +212,7 @@ export async function generateFilterReport(
       }
     });
 
-    query += `ELSE '${elseText}' END AS Result FROM ${tableName}`;
+    query += `ELSE '${elseText}' END AS Hasil FROM ${tableName}`;
 
     console.log("Executing query:", query); // Log the query before execution
 

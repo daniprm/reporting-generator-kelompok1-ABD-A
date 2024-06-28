@@ -366,26 +366,82 @@ async function main() {
             type: "list",
             name: "action",
             message: "Pilih Salah Satu",
-            choices: ["Filter Data", "Tampilkan Data"],
+            choices: ["Tampilkan Data", "Filter Hasil Agregasi"],
           },
         ];
         const pilihLangkahBerikutnyaAnswer = await inquirer.prompt(
           pilihLangkahBerikutnya
         );
+
+        const namaLaporan = `Laporan ${pilihanAgregasi} ${kolomAgregasi} Tabel ${
+          dataTabel.namaTabel
+        } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
         if (pilihLangkahBerikutnyaAnswer.action === "Tampilkan Data") {
           const hasil = await generateGroupByReport(
             dataTabel.namaTabelFull,
             kolomAgregasi,
             kolomKelompok,
             pilihanAgregasi,
-            false
+            0
           );
-          const namaLaporan = `Laporan ${pilihanAgregasi} ${kolomAgregasi} Tabel ${
-            dataTabel.namaTabel
-          } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
 
           endQuestion(hasil, namaLaporan);
         } else {
+          const pilihOperator = [
+            {
+              type: "list",
+              name: "action",
+              message: "Pilih Salah Satu",
+              choices: [">", "<", "<=", ">=", "="],
+            },
+          ];
+          const pilihOperatorAnswer = await inquirer.prompt(pilihOperator);
+          const masukkanDataKondisi = [
+            {
+              type: "input",
+              name: "action",
+              message: "Masukkan angka untuk operasi filter:",
+              validate: function (value) {
+                const valid = !isNaN(parseFloat(value));
+                return valid || "Silakan masukkan angka yang valid";
+              },
+              filter: Number,
+            },
+          ];
+          const masukkanDataKondisiAnswer = await inquirer.prompt(
+            masukkanDataKondisi
+          );
+          const teksHasilFilter = [
+            {
+              type: "input",
+              name: "action",
+              message: "Masukkan teks hasil filter jika memenuhi kondisi:",
+            },
+          ];
+          const teksHasilFilterAnswer = await inquirer.prompt(teksHasilFilter);
+          const teksBukanFilter = [
+            {
+              type: "input",
+              name: "action",
+              message:
+                "Masukkan teks hasil filter jika tidak memenuhi kondisi:",
+            },
+          ];
+          const teksBukanFilterAnswer = await inquirer.prompt(teksBukanFilter);
+
+          const hasil = await generateGroupByReport(
+            dataTabel.namaTabelFull,
+            kolomAgregasi,
+            kolomKelompok,
+            pilihanAgregasi,
+            1,
+            pilihOperatorAnswer.action,
+            masukkanDataKondisiAnswer.action,
+            teksHasilFilterAnswer.action,
+            teksBukanFilterAnswer.action
+          );
+
+          endQuestion(hasil, namaLaporan);
         }
       }
     }
