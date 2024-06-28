@@ -92,3 +92,48 @@ export async function generatePivotReport(
 ){
   //Case to operate on variable
 }
+
+export async function generateFilterReport(tableName, displayColumns, filterColumn, conditions, elseText) {
+  try {
+    await sql.connect(sqlConfig);
+    let query = `SELECT ${displayColumns} CASE `; // Tambahkan koma di sini untuk memisahkan kolom dan CASE
+
+    conditions.forEach((condition, index) => {
+      if (condition.filterType === 'LIKE') {
+        query += `WHEN ${filterColumn} LIKE '%${condition.condition}%' THEN '${condition.text}' `;
+      } else {
+        const operator = condition.filterType === '=' ? '=' : 
+                         condition.filterType === '>' ? '>' : 
+                         condition.filterType === '<' ? '<' : '';
+
+        query += `WHEN ${filterColumn} ${operator} '${condition.condition}' THEN '${condition.text}' `;
+      }
+    });
+
+    query += `ELSE '${elseText}' END AS Result FROM ${tableName}`;
+
+    console.log('Executing query:', query); // Log the query before execution
+
+    const result = await sql.query(query);
+    console.log('Query executed successfully.');
+
+    // Create a new table instance
+    const table = new Table({
+      head: [...displayColumns.split(', '), 'Result'], // Include 'Result' column header
+      colWidths: new Array(displayColumns.split(', ').length + 1).fill(20) // Optional: Set column widths
+    });
+
+    // Add rows to the table
+    result.recordset.forEach(row => {
+      table.push(Object.values(row));
+    });
+
+    // Print the table to console
+    console.log(table.toString());
+
+    return result.recordset;
+  } catch (error) {
+    console.error('Error generating filter report:', error); // Log errors if any
+    throw error;
+  }
+}

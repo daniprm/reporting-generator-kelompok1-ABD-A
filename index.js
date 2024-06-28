@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
 import { exportLaporanToExcel } from "./exportExcel.js";
-import { generateGroupByReport } from "./reports.js";
+import { generateGroupByReport, generateFilterReport } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
@@ -37,6 +37,7 @@ async function main() {
             "Pivot Data",
             "Lihat Semua Data",
             "Laporan Autentikasi",
+            "Filter Data",
             "Keluar",
           ],
         },
@@ -55,6 +56,10 @@ async function main() {
           break;
         case "Pivot Data":
           getColumnPivot();
+
+          break;
+          case "Filter Data":
+            applyFilter();
 
           break;
         case "Lihat Semua Data":
@@ -203,6 +208,116 @@ async function main() {
     // END PIVOTTT------------------------------------------------------------------------------
 
     async function tampilSemua() {}
+
+    // =======================================FILTER DATA==========================================
+    async function promptNumberOfConditions() {
+      const answers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'count',
+          message: 'Masukkan jumlah kondisi yang ingin Anda gunakan (1, 2, atau 3):',
+          validate: function (value) {
+            var valid = !isNaN(parseFloat(value)) && parseInt(value) >= 1 && parseInt(value) <= 3;
+            return valid || 'Masukkan angka yang valid antara 1 dan 3!';
+          },
+          filter: Number
+        }
+      ]);
+      return answers.count;
+    }    
+    
+    async function applyFilter() {
+      const schema = await selectTableSchema();
+      const tableData = await selectTableNames(schema);
+    
+      if (tableData.namaTabel === "Kembali") {
+        return applyFilter(); // Panggil ulang fungsi jika pengguna memilih "Kembali"
+      }
+    
+      console.log("Pilih kolom yang akan ditampilkan:");
+      const displayColumns = await pilihBanyakKolom(tableData.namaTabel);
+      if (!displayColumns) {
+        console.log('No columns selected for display. Exiting filter application.');
+        return;
+      }
+    
+      console.log("Pilih kolom untuk difilter:");
+      const filterColumn = await pilihKolom(tableData.namaTabel);
+      const isNumericColumn = await getColumnsAngka(tableData.namaTabel);
+    
+      const numberOfConditions = await promptNumberOfConditions(); // Meminta jumlah kondisi
+      const conditions = [];
+    
+      for (let i = 0; i < numberOfConditions; i++) {
+        console.log(`Pilih kondisi ke-${i + 1}:`);
+        const text = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'text',
+            message: `Masukkan teks yang akan ditampilkan untuk kondisi ${i + 1}:`
+          }
+        ]);
+    
+        if (isNumericColumn.includes(filterColumn)) {
+          console.log(`Pilih tipe filter untuk kolom ${filterColumn}:`);
+          const { filterType, condition } = await promptNumericFilter();
+          conditions.push({ type: 'numeric', filterType, condition, text: text.text });
+        } else {
+          const condition = await promptTextFilter();
+          conditions.push({ type: 'text', condition, filterType: 'LIKE', text: text.text });
+        }
+      }
+    
+      const elseText = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'elseText',
+          message: 'Masukkan teks yang akan ditampilkan jika tidak ada kondisi yang terpenuhi:'
+        }
+      ]);
+    
+      await generateFilterReport(tableData.namaTabelFull, displayColumns, filterColumn, conditions, elseText.elseText);
+      console.log('Filter applied and report generated.');
+    
+      // Tanyakan langkah berikutnya
+      endQuestion();
+    }    
+    
+    async function promptNumericFilter() {
+      const answers = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'filterType',
+          message: 'Pilih kondisi filter numerik:',
+          choices: [
+            { name: 'Equals', value: '=' },
+            { name: 'Greater than', value: '>' },
+            { name: 'Less than', value: '<' },
+          ],
+        },
+        {
+          type: 'input',
+          name: 'condition',
+          message: 'Masukkan nilai untuk kondisi:',
+        },
+      ]);
+      return answers;
+    }        
+    
+    async function promptTextFilter() {
+      const answer = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'condition',
+          message: 'Masukkan kata kunci untuk filtering (akan menggunakan LIKE):'
+        }
+      ]);
+      return answer.condition;
+    }
+    
+    
+    // =======================================END OF FILTER DATA==========================================
+
     // =======================================GROUP BY==========================================
     async function groupBy() {
       const namaSkema = await selectTableSchema();
