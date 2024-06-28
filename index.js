@@ -1,7 +1,11 @@
 import inquirer from "inquirer";
 import { authenticateUser } from "./auth.js";
 import { exportLaporanToExcel } from "./exportExcel.js";
-import { generateGroupByReport, generateFilterReport } from "./reports.js";
+import {
+  generateGroupByReport,
+  generateFilterReport,
+  generateTableReport,
+} from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
@@ -119,14 +123,21 @@ async function main() {
           name: "dataKolom",
           message: "Pilih Kolom",
           choices: [...(await getColumns(namaTabel))],
+          validate: function (answer) {
+            if (answer.length < 1) {
+              return "Anda harus memilih setidaknya satu opsi.";
+            }
+            return true;
+          },
         },
       ];
 
       const banyakKolomAnswers = await inquirer.prompt(banyakKolomQuestion);
-
       let kolomHasil = "";
+
       banyakKolomAnswers.dataKolom.forEach((res) => (kolomHasil += res + ","));
       kolomHasil = kolomHasil.slice(0, -1);
+
       return kolomHasil;
     }
 
@@ -206,7 +217,61 @@ async function main() {
     }
     // END PIVOTTT------------------------------------------------------------------------------
 
-    async function tampilSemua() {}
+    async function tampilSemua() {
+      const namaSkema = await selectTableSchema();
+      const dataTabel = await selectTableNames(namaSkema);
+
+      console.log("Pilih Kolom Untuk Ditampilkan");
+      const kolomTampil = await pilihBanyakKolom(dataTabel.namaTabel);
+      const pilihBaris = [
+        {
+          type: "list",
+          name: "action",
+          message: "Pilih Jumlah Baris Teratas yang Ingin ditampilkan",
+          choices: ["5", "10", "100", "Semua Baris", "Input Lainnya"],
+        },
+      ];
+
+      const pilihBarisAnswer = await inquirer.prompt(pilihBaris);
+      if (pilihBarisAnswer.action === "Input Lainnya") {
+        const inputBarisTampil = [
+          {
+            type: "input",
+            name: "action",
+            message: "Masukkan Jumlah Baris yang Ingin ditampilkan:",
+            validate: function (value) {
+              const valid = !isNaN(parseFloat(value));
+              return valid || "Silakan masukkan angka yang valid";
+            },
+          },
+        ];
+        const inputBarisTampilAnswer = await inquirer.prompt(inputBarisTampil);
+        const hasil = await generateTableReport(
+          dataTabel.namaTabelFull,
+          kolomTampil,
+          inputBarisTampilAnswer.action
+        );
+
+        endQuestion(
+          hasil,
+          `Laporan Tabel ${dataTabel.namaTabel} ${dayjs().format(
+            "DD MMM YYYY (hh.mm A)"
+          )}`
+        );
+      } else {
+        const hasil = await generateTableReport(
+          dataTabel.namaTabelFull,
+          kolomTampil,
+          pilihBarisAnswer.action
+        );
+        endQuestion(
+          hasil,
+          `Laporan Tabel ${dataTabel.namaTabel} ${dayjs().format(
+            "DD MMM YYYY (hh.mm A)"
+          )}`
+        );
+      }
+    }
 
     // =======================================FILTER DATA==========================================
     async function promptNumberOfConditions() {
@@ -382,7 +447,11 @@ async function main() {
             kolomAgregasi,
             kolomKelompok,
             pilihanAgregasi,
-            0
+            0,
+            "=",
+            "0",
+            "",
+            ""
           );
 
           endQuestion(hasil, namaLaporan);
@@ -405,7 +474,6 @@ async function main() {
                 const valid = !isNaN(parseFloat(value));
                 return valid || "Silakan masukkan angka yang valid";
               },
-              filter: Number,
             },
           ];
           const masukkanDataKondisiAnswer = await inquirer.prompt(

@@ -18,15 +18,30 @@ export async function generateGroupByReport(
     await sql.connect(sqlConfig);
     let result = await sql.query(`
       BEGIN
-        DECLARE @isFilter BIT = '${isFilter}'
-        DECLARE @agregasi varchar(10) = '${agregasi}'
-        DECLARE @operator varchar(2) = '${operator}'
-        DECLARE @dataKondisi float = ${dataKondisi}
-        DECLARE @teksHasilKondisi varchar(255) = '${teksHasilKondisi}'
-        DECLARE @elseTeks varchar(255) = '${elseTeks}'
-
-        IF @isFilter = 1
+      
+      DECLARE @isFilter BIT = ${isFilter}
+      DECLARE @agregasi varchar(10) = '${agregasi}'
+      
+        IF @isFilter = 0
         BEGIN
+          SELECT ${kolomKelompok}, 
+          CASE 
+            WHEN @agregasi = 'Hitung' THEN COUNT(${kolomAgregasi})
+            WHEN @agregasi = 'Jumlah' THEN SUM(${kolomAgregasi})
+            WHEN @agregasi = 'Rata-Rata' THEN AVG(${kolomAgregasi})
+          END AS 'Hasil ${agregasi}'
+          FROM ${namaTable}
+          GROUP BY ${kolomKelompok};
+          RETURN;
+        END
+        
+        ELSE
+        BEGIN
+          
+          DECLARE @operator varchar(2) = '${operator}'
+          DECLARE @dataKondisi float = ${dataKondisi}
+          DECLARE @teksHasilKondisi varchar(255) = '${teksHasilKondisi}'
+          DECLARE @elseTeks varchar(255) = '${elseTeks}'
           SELECT ${kolomKelompok}, 
           CASE 
             WHEN @agregasi = 'Hitung' THEN COUNT(${kolomAgregasi})
@@ -129,18 +144,6 @@ export async function generateGroupByReport(
           FROM ${namaTable}
           GROUP BY ${kolomKelompok};
         END
-        
-        ELSE
-        BEGIN
-          SELECT ${kolomKelompok}, 
-          CASE 
-            WHEN @agregasi = 'Hitung' THEN COUNT(${kolomAgregasi})
-            WHEN @agregasi = 'Jumlah' THEN SUM(${kolomAgregasi})
-            WHEN @agregasi = 'Rata-Rata' THEN AVG(${kolomAgregasi})
-          END AS 'Hasil ${agregasi}'
-          FROM ${namaTable}
-          GROUP BY ${kolomKelompok};
-        END
       END
       `);
 
@@ -154,28 +157,35 @@ export async function generateGroupByReport(
     // console.log(util.inspect(result.recordset, { maxArrayLength: null }));
 
     // console.log("======================================");
-    // Membuat tabel CLI
-    const table = new Table({
-      head: Object.keys(result.recordset[0]),
-    });
 
-    // Menambahkan data ke tabel
-    result.recordset.forEach((record) => {
-      let temp = [];
-      Object.values(record).forEach((value) => {
-        temp.push(value.toString()); // Output: abc, kls
-      });
-      table.push(temp);
-    });
-
-    // Menampilkan tabel di console
-    console.log(table.toString());
+    showTable(result.recordset);
 
     console.log("Gunakan tombol panah pada keyboard untuk navigasi: ");
 
     return result.recordset;
   } catch (error) {
     console.error("Error generating report:", error);
+    throw error;
+  }
+}
+export async function generateTableReport(namaTable, kolomTampil, jumlahBaris) {
+  try {
+    await sql.connect(sqlConfig);
+    let result;
+    if (isNaN(parseInt(jumlahBaris)))
+      result = await sql.query(`
+      SELECT ${kolomTampil} FROM ${namaTable}
+    `);
+    else {
+      result = await sql.query(`
+      SELECT TOP ${jumlahBaris} ${kolomTampil} FROM ${namaTable}
+    `);
+    }
+
+    showTable(result.recordset);
+
+    return result.recordset;
+  } catch (error) {
     throw error;
   }
 }
@@ -219,26 +229,31 @@ export async function generateFilterReport(
     const result = await sql.query(query);
     console.log("Query executed successfully.");
 
-    // Membuat tabel CLI
-    const table = new Table({
-      head: Object.keys(result.recordset[0]),
-    });
-
-    // Menambahkan data ke tabel
-    result.recordset.forEach((record) => {
-      let temp = [];
-      Object.values(record).forEach((value) => {
-        temp.push(value.toString()); // Output: abc, kls
-      });
-      table.push(temp);
-    });
-
-    // Menampilkan tabel di console
-    console.log(table.toString());
+    showTable(result.recordset);
 
     return result.recordset;
   } catch (error) {
     console.error("Error generating filter report:", error); // Log errors if any
     throw error;
   }
+}
+
+function showTable(data) {
+  // Membuat tabel CLI
+  const table = new Table({
+    head: Object.keys(data[0]),
+  });
+
+  // Menambahkan data ke tabel
+  data.forEach((record) => {
+    let temp = [];
+    Object.values(record).forEach((value) => {
+      if (value === null) temp.push(value);
+      else temp.push(value.toString()); // Output: abc, kls
+    });
+    table.push(temp);
+  });
+
+  // Menampilkan tabel di console
+  console.log(table.toString());
 }
