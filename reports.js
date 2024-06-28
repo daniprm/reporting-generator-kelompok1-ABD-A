@@ -17,7 +17,7 @@ export async function generateGroupByReport(
       switch (agregasi) {
         case "Jumlah":
           result = await sql.query(`
-            SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
+            SELECT ${kolomKelompok} SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok} ''
           `);
           break;
         case "Hitung":
@@ -53,31 +53,30 @@ export async function generateGroupByReport(
 
     console.log("\n Laporan berhasil dibuat!");
 
-    console.log("======================================");
+    // console.log("======================================");
 
-    // result.recordset.forEach((record) => {
-    //   console.log(`${record}`);
-    // });
-    console.log(util.inspect(result.recordset, { maxArrayLength: null }));
+    // // result.recordset.forEach((record) => {
+    // //   console.log(`${record}`);
+    // // });
+    // console.log(util.inspect(result.recordset, { maxArrayLength: null }));
 
-    console.log("======================================");
-    // // Membuat tabel CLI
-    // const table = new Table({
-    //   head: Object.keys(result.recordset[0]),
-    //   colWidths: [30, 20],
-    // });
+    // console.log("======================================");
+    // Membuat tabel CLI
+    const table = new Table({
+      head: Object.keys(result.recordset[0]),
+    });
 
-    // // Menambahkan data ke tabel
-    // result.recordset.forEach((record) => {
-    //   let temp = [];
-    //   Object.values(record).forEach((value) => {
-    //     temp.push(value.toString()); // Output: abc, kls
-    //   });
-    //   table.push(temp);
-    // });
+    // Menambahkan data ke tabel
+    result.recordset.forEach((record) => {
+      let temp = [];
+      Object.values(record).forEach((value) => {
+        temp.push(value.toString()); // Output: abc, kls
+      });
+      table.push(temp);
+    });
 
-    // // Menampilkan tabel di console
-    // console.log(table.toString());
+    // Menampilkan tabel di console
+    console.log(table.toString());
 
     console.log("Gunakan tombol panah pada keyboard untuk navigasi: ");
 
@@ -87,24 +86,34 @@ export async function generateGroupByReport(
     throw error;
   }
 }
-export async function generatePivotReport(
+export async function generatePivotReport() {
   //Variable from index
-){
   //Case to operate on variable
 }
 
-export async function generateFilterReport(tableName, displayColumns, filterColumn, conditions, elseText) {
+export async function generateFilterReport(
+  tableName,
+  displayColumns,
+  filterColumn,
+  conditions,
+  elseText
+) {
   try {
     await sql.connect(sqlConfig);
-    let query = `SELECT ${displayColumns} CASE `; // Tambahkan koma di sini untuk memisahkan kolom dan CASE
+    let query = `SELECT ${displayColumns}, CASE `; // Tambahkan koma di sini untuk memisahkan kolom dan CASE
 
     conditions.forEach((condition, index) => {
-      if (condition.filterType === 'LIKE') {
+      if (condition.filterType === "LIKE") {
         query += `WHEN ${filterColumn} LIKE '%${condition.condition}%' THEN '${condition.text}' `;
       } else {
-        const operator = condition.filterType === '=' ? '=' : 
-                         condition.filterType === '>' ? '>' : 
-                         condition.filterType === '<' ? '<' : '';
+        const operator =
+          condition.filterType === "="
+            ? "="
+            : condition.filterType === ">"
+            ? ">"
+            : condition.filterType === "<"
+            ? "<"
+            : "";
 
         query += `WHEN ${filterColumn} ${operator} '${condition.condition}' THEN '${condition.text}' `;
       }
@@ -112,28 +121,31 @@ export async function generateFilterReport(tableName, displayColumns, filterColu
 
     query += `ELSE '${elseText}' END AS Result FROM ${tableName}`;
 
-    console.log('Executing query:', query); // Log the query before execution
+    console.log("Executing query:", query); // Log the query before execution
 
     const result = await sql.query(query);
-    console.log('Query executed successfully.');
+    console.log("Query executed successfully.");
 
-    // Create a new table instance
+    // Membuat tabel CLI
     const table = new Table({
-      head: [...displayColumns.split(', '), 'Result'], // Include 'Result' column header
-      colWidths: new Array(displayColumns.split(', ').length + 1).fill(20) // Optional: Set column widths
+      head: Object.keys(result.recordset[0]),
     });
 
-    // Add rows to the table
-    result.recordset.forEach(row => {
-      table.push(Object.values(row));
+    // Menambahkan data ke tabel
+    result.recordset.forEach((record) => {
+      let temp = [];
+      Object.values(record).forEach((value) => {
+        temp.push(value.toString()); // Output: abc, kls
+      });
+      table.push(temp);
     });
 
-    // Print the table to console
+    // Menampilkan tabel di console
     console.log(table.toString());
 
     return result.recordset;
   } catch (error) {
-    console.error('Error generating filter report:', error); // Log errors if any
+    console.error("Error generating filter report:", error); // Log errors if any
     throw error;
   }
 }
