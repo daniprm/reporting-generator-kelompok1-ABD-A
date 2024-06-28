@@ -72,7 +72,6 @@ export async function databaseAuthReports() {
     // Membuat tabel CLI
     const table = new Table({
       head: Object.keys(result.recordset[0]),
-      colWidths: [30, 20],
     });
 
     // Menambahkan data ke tabel

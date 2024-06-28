@@ -469,7 +469,8 @@ async function main() {
           menuAwal();
           break;
         case "Export Data Ke Excel Untuk Melihat Selengkapnya":
-          exportLaporanToExcel(dataHasil, namaLaporan);
+          await exportLaporanToExcel(dataHasil, namaLaporan);
+          menuAwal();
           break;
         case "Keluar":
           console.log("Keluar Dari Aplikasi...");
@@ -493,11 +494,21 @@ async function main() {
         tingkatAutentikasiQuestions
       );
       if (tingkatAutentikasiAnswer.action === "Database") {
-        await databaseAuthReports();
-        endQuestion();
+        const hasil = await databaseAuthReports();
+        endQuestion(
+          hasil,
+          `Laporan Autentikasi Database ${dayjs().format(
+            "DD MMM YYYY (hh.mm A)"
+          )}`
+        );
       } else {
-        await loginReports();
-        endQuestion();
+        const hasil = await loginReports();
+        endQuestion(
+          hasil,
+          `Laporan Autentikasi Login (Server) ${dayjs().format(
+            "DD MMM YYYY (hh.mm A)"
+          )}`
+        );
       }
     }
   } catch (error) {
