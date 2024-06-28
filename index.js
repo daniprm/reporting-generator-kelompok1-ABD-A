@@ -5,12 +5,14 @@ import {
   generateGroupByReport,
   generateFilterReport,
   generateTableReport,
+  generatePivotReport
 } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
   getColumns,
   getColumnsAngka,
+  getPivotColumnDetail
 } from "./getTables.js";
 import { loginReports, databaseAuthReports } from "./authReports.js";
 import dayjs from "dayjs";
@@ -185,11 +187,14 @@ async function main() {
     async function getColumnPivot() {
       const namaSkema = await selectTableSchema();
       const dataTabel = await selectTableNames(namaSkema);
+      console.log("Pilih beberapa kolom untuk dijadikan source table ")
       const sourceColumn = await pilihBanyakKolom(dataTabel.namaTabel);
+      console.log("Pilih jenis agregasi yang akan dilakukan kolom ")
       const pilihanAgregasi = await pilihAgregasi();
+      console.log("Pilih satu kolom yang akan dijakian pivoted column  ")
       const pivotColumn = await pilihKolom(dataTabel.namaTabel);
-      const pivotColumnDetail = await getColumnPivot(
-        dataTabel.namaTabel,
+      const pivotColumnDetail = await getPivotColumnDetail(
+        dataTabel.namaTabelFull,
         pivotColumn
       );
 
@@ -202,7 +207,7 @@ async function main() {
           : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
 
         const hasil = await generatePivotReport(
-          dataTabel.namaTabelFULL,
+          dataTabel.namaTabelFull,
           kolomAgregasi,
           sourceColumn,
           pivotColumn,

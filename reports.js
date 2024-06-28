@@ -201,6 +201,19 @@ export async function generatePivotReport(
   try{
     let result = ''
     switch(pilihanAgregasi) {
+      case 'Hitung':
+        await sql.connect(sqlConfig);
+        result = await sql.query(`
+          SELECT *
+          FROM (
+            SELECT ${sourceColumn} FROM ${dataTabel}
+          )AS Src
+          PIVOT(
+            COUNT(${kolomAgregasi})
+            FOR ${pivotColumn} IN (${pivotColumnDetail})
+          )AS Pvt
+        `)
+        break;
       case 'Jumlah':
         await sql.connect(sqlConfig);
         result = await sql.query(`
@@ -210,19 +223,6 @@ export async function generatePivotReport(
           )AS Src
           PIVOT(
             SUM(${kolomAgregasi})
-            FOR ${pivotColumn} IN (---)
-          )AS Pvt
-        `)
-        break;
-      case 'Hitung':
-        await sql.connect(sqlConfig);
-        result = await sql.query(`
-          SELECT *
-          FROM (
-            SELECT --- FROM ${dataTabel}
-          )AS Src
-          PIVOT(
-            COUNT(${kolomAgregasi})
             FOR ${pivotColumn} IN (---)
           )AS Pvt
           `)

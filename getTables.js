@@ -109,14 +109,17 @@ export async function getPivotColumnDetail(namaTable,pivotColumn) {
         `SELECT DISTINCT ${pivotColumn} FROM ${namaTable};`
       );
 
-    const pivotColumnNames = [];
-    result.recordset.forEach((table) => {
-      pivotColumnNames.push(table.pivotColumn);
-    });
+      let kolomHasil = "";
+
+      result.recordset.forEach((res) => (
+        kolomHasil +='['+ res[pivotColumn] + "],")
+      );
+      kolomHasil = kolomHasil.slice(0, -1);
+      console.log(kolomHasil)
 
     // Close the connection
     await pool.close();
-    return pivotColumnNames;
+    return kolomHasil;
   } catch (err) {
     console.error("Error retrieving table names:", err.message);
   }
