@@ -2,7 +2,7 @@ Cara pakai:
 1. Download .zip repository
 2. Buka reporting-generator-kelompok1-ABD-A.exe
 3. Isi data yang diperlukan untuk autentikasi SQL Server
-Note: Hanya bisa untuk SQL Server Authentication, jadi, pastikan mode SQL Server authentication telah dikonfigurasi dengan baik
+Note: Hanya bisa untuk SQL Server Authentication, jadi, pastikan untuk SQL Server authentication telah dikonfigurasi dengan baik
 
 Untuk Development
 Cara menjalankan:
