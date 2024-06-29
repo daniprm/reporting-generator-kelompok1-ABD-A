@@ -369,8 +369,10 @@ export async function generatePivotReport(
     ];
 
     const unpivotAnswer = await inquirer.prompt(unpivotQuestion);
+
+    let resultUnpivot;
     if (unpivotAnswer.action === "Ya") {
-      result = await sql.query(`
+      resultUnpivot = await sql.query(`
         SELECT *
         FROM ##pvtTable
         AS Src
@@ -378,12 +380,14 @@ export async function generatePivotReport(
           ${kolomAgregasi} FOR ${pivotColumn} IN (${pivotColumnDetail})
         ) AS Final
         `);
-      showTable(result.recordset);
+      showTable(resultUnpivot.recordset);
     }
+
+    const hasil = [result.recordset, resultUnpivot.recordset];
 
     console.log("Gunakan tombol panah pada keyboard untuk navigasi: ");
 
-    return result.recordset;
+    return hasil;
   } catch (error) {
     console.error("Error generating report:", error);
     throw error;

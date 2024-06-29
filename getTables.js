@@ -109,9 +109,9 @@ export async function getPivotColumnDetail(namaTable, pivotColumn) {
 
     let kolomHasil = "";
 
-    result.recordset.forEach(
-      (res) => (kolomHasil += "[" + res[pivotColumn] + "],")
-    );
+    result.recordset.forEach((res) => {
+      kolomHasil += "[" + res[pivotColumn] + "],";
+    });
     kolomHasil = kolomHasil.slice(0, -1);
     console.log(kolomHasil);
 

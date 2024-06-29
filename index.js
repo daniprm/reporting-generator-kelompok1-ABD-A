@@ -232,12 +232,50 @@ async function main() {
           pivotColumnDetail,
           pilihanAgregasi
         );
-        const namaLaporan = `Laporan Pivot Kolom ${sourceColumn} Dan ${
+        const namaLaporanPivot = `Laporan Pivot Kolom ${sourceColumn} Dan ${
           pilihKolomPivotAnswer.action
         } Tabel ${dataTabel.namaTabel} ${dayjs().format(
           "DD MMM YYYY (hh.mm A)"
         )}`;
-        endQuestion(hasil, namaLaporan);
+        if (hasil[1]) {
+          const endQuestions = [
+            {
+              type: "list",
+              name: "action",
+              message: "Pilih Langkah Berikutnya",
+              choices: [
+                "Export Data Ke Excel Untuk Melihat Selengkapnya",
+                "Kembali Menu Utama",
+                "Keluar",
+              ],
+            },
+          ];
+
+          const endAnswer = await inquirer.prompt(endQuestions);
+
+          switch (endAnswer.action) {
+            case "Kembali Menu Utama":
+              menuAwal();
+              break;
+            case "Export Data Ke Excel Untuk Melihat Selengkapnya":
+              await exportLaporanToExcel(hasil[0], namaLaporanPivot);
+              await exportLaporanToExcel(
+                hasil[1],
+                `Laporan Unpivot Kolom ${sourceColumn} Dan ${
+                  pilihKolomPivotAnswer.action
+                } Tabel ${dataTabel.namaTabel} ${dayjs().format(
+                  "DD MMM YYYY (hh.mm A)"
+                )}`
+              );
+              menuAwal();
+              break;
+            case "Keluar":
+              console.log("Keluar Dari Aplikasi...");
+              process.exit(); // Keluar dari Aplikasi
+          }
+        } else {
+          endQuestion(hasil[0], namaLaporanPivot);
+        }
       }
     }
     // END PIVOTTT------------------------------------------------------------------------------
