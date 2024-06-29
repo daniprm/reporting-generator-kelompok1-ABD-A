@@ -5,8 +5,12 @@ Cara pakai:
    
 Note: Hanya bisa untuk SQL Server Authentication, jadi, pastikan untuk SQL Server authentication telah dikonfigurasi dengan baik
 
+
+
 Untuk Development
+
 Cara menjalankan:
+
 Pastikan Node.js telah terinstall
 
 1. Buka terminal
