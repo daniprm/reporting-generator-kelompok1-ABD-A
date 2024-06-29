@@ -1,4 +1,5 @@
 import sql from "mssql";
+import inquirer from "inquirer";
 import { sqlConfig } from "./config.js";
 import { getPivotColumnDetail } from "./getTables.js";
 import util from "util";
@@ -281,6 +282,12 @@ export async function generatePivotReport(
       case "Hitung":
         await sql.connect(sqlConfig);
         result = await sql.query(`
+          IF OBJECT_ID('tempdb..#pvtTable') IS NOT NULL
+          BEGIN
+          DROP TABLE #pvtTable;
+          END
+
+          SELECT * INTO #pvtTable FROM (
           SELECT *
           FROM (
             SELECT ${sourceColumn} FROM ${dataTabel}
@@ -289,11 +296,20 @@ export async function generatePivotReport(
             COUNT(${kolomAgregasi})
             FOR ${pivotColumn} IN (${pivotColumnDetail})
           )AS Pvt
+          )AS Temp
+
+          SELECT * FROM #pvtTable
         `);
         break;
       case "Jumlah":
         await sql.connect(sqlConfig);
         result = await sql.query(`
+          IF OBJECT_ID('tempdb..#pvtTable') IS NOT NULL
+          BEGIN
+          DROP TABLE #pvtTable;
+          END
+
+          SELECT * INTO #pvtTable FROM (
           SELECT *
           FROM (
             SELECT ${sourceColumn} FROM ${dataTabel}
@@ -302,11 +318,20 @@ export async function generatePivotReport(
             SUM(${kolomAgregasi})
             FOR ${pivotColumn} IN (${pivotColumnDetail})
           )AS Pvt
+          )AS Temp
+
+          SELECT * FROM #pvtTable
           `);
         break;
       case "Rata-Rata":
         await sql.connect(sqlConfig);
         result = await sql.query(`
+          IF OBJECT_ID('tempdb..#pvtTable') IS NOT NULL
+          BEGIN
+          DROP TABLE #pvtTable;
+          END
+
+          SELECT * INTO #pvtTable FROM (
           SELECT *
           FROM (
             SELECT ${sourceColumn} FROM ${dataTabel}
@@ -316,6 +341,9 @@ export async function generatePivotReport(
             FOR ${pivotColumn} IN (${pivotColumnDetail})
           
           )AS Pvt
+          )AS Temp
+
+          SELECT * FROM #pvtTable
           `);
         break;
     }
@@ -334,14 +362,22 @@ export async function generatePivotReport(
       //Buat query unpivot dinamis di sini
       // nanti di sini tetap result = await sql.query(``)
       //       -- Melakukan UNPIVOT
-      // SELECT StateProvinceID, TaxType, TaxRate
+      // SELECT *
       // FROM (
-      //     SELECT StateProvinceID, [1], [2], [3]
+      //     SELECT *
       //     FROM #pvtTable
-      // ) p
+      // ) AS Src
       // UNPIVOT (
       //     TaxRate FOR TaxType IN ([1], [2], [3])
       // ) AS unpvt;
+      result = await sql.query(`
+        SELECT *
+        FROM #pvtTable
+        AS Src
+        UNPIVOT (
+          ${kolomAgregasi} FOR ${pivotColumn} IN (${pivotColumnDetail})
+        ) AS Final
+        `)
     }
 
     console.log("\n Laporan berhasil dibuat.");
