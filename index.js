@@ -207,11 +207,22 @@ async function main() {
 
       if (pilihanAgregasi === "Kembali") getColumnPivot();
       else {
-        console.log(`Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`);
         let kolomAgregasi;
+        const pilihKolomAgregasi = [
+          {
+            type: "list",
+            name: "action",
+            message: `Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`,
+            choices: sourceColumn.split(","),
+          },
+        ];
+        //di bawah ini adalah pivotColumn
+        const pilihKolomAgregasiAnswer = await inquirer.prompt(
+          pilihKolomAgregasi
+        );
         pilihanAgregasi === "Hitung"
-          ? (kolomAgregasi = await pilihKolom(dataTabel.namaTabel))
-          : (kolomAgregasi = await pilihKolomAngka(dataTabel.namaTabel));
+          ? (kolomAgregasi = pilihKolomAgregasiAnswer.action)
+          : (kolomAgregasi = pilihKolomAgregasiAnswer.action);
 
         const hasil = await generatePivotReport(
           dataTabel.namaTabelFull,
