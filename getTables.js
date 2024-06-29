@@ -97,7 +97,7 @@ export async function getColumnsAngka(namaTable) {
     console.error("Error retrieving table names:", err.message);
   }
 }
-export async function getPivotColumnDetail(namaTable,pivotColumn) {
+export async function getPivotColumnDetail(namaTable, pivotColumn) {
   try {
     // Establish a connection to the database
     let pool = await sql.connect(sqlConfig);
@@ -105,17 +105,15 @@ export async function getPivotColumnDetail(namaTable,pivotColumn) {
     // Query to get all table names in the current database
     const result = await pool
       .request()
-      .query(
-        `SELECT DISTINCT ${pivotColumn} FROM ${namaTable};`
-      );
+      .query(`SELECT DISTINCT ${pivotColumn} FROM ${namaTable};`);
 
-      let kolomHasil = "";
+    let kolomHasil = "";
 
-      result.recordset.forEach((res) => (
-        kolomHasil +='['+ res[pivotColumn] + "],")
-      );
-      kolomHasil = kolomHasil.slice(0, -1);
-      console.log(kolomHasil)
+    result.recordset.forEach(
+      (res) => (kolomHasil += "[" + res[pivotColumn] + "],")
+    );
+    kolomHasil = kolomHasil.slice(0, -1);
+    console.log(kolomHasil);
 
     // Close the connection
     await pool.close();

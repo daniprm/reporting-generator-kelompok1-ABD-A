@@ -320,6 +320,30 @@ export async function generatePivotReport(
         break;
     }
 
+    const unpivotQuestion = [
+      {
+        type: "list",
+        name: "action",
+        message: "Pilih Salah Satu: ",
+        choices: ["Tampilkan Hasil Pivot", "Unpivot"],
+      },
+    ];
+
+    const unpivotAnswer = await inquirer.prompt(unpivotQuestion);
+    if (unpivotAnswer.action === "Unpivot") {
+      //Buat query unpivot dinamis di sini
+      // nanti di sini tetap result = await sql.query(``)
+      //       -- Melakukan UNPIVOT
+      // SELECT StateProvinceID, TaxType, TaxRate
+      // FROM (
+      //     SELECT StateProvinceID, [1], [2], [3]
+      //     FROM #pvtTable
+      // ) p
+      // UNPIVOT (
+      //     TaxRate FOR TaxType IN ([1], [2], [3])
+      // ) AS unpvt;
+    }
+
     console.log("\n Laporan berhasil dibuat.");
 
     // console.log("======================================");
