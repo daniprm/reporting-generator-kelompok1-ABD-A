@@ -5,14 +5,14 @@ import {
   generateGroupByReport,
   generateFilterReport,
   generateTableReport,
-  generatePivotReport
+  generatePivotReport,
 } from "./reports.js";
 import {
   getTableSchema,
   getTableNames,
   getColumns,
   getColumnsAngka,
-  getPivotColumnDetail
+  getPivotColumnDetail,
 } from "./getTables.js";
 import { loginReports, databaseAuthReports } from "./authReports.js";
 import dayjs from "dayjs";
@@ -100,7 +100,7 @@ async function main() {
           type: "list",
           name: "action",
           message: "Pilih Tabel",
-          choices: [...(await getTableNames(namaSkema)), "Kembali"],
+          choices: [...(await getTableNames(namaSkema))],
         },
       ];
       const selectTableNameAnswer = await inquirer.prompt(
@@ -113,8 +113,7 @@ async function main() {
         namaTabelFull: namaSkema + "." + selectTableNameAnswer.action,
       };
 
-      if (selectTableNameAnswer.action === "Kembali") selectTableSchema();
-      else return tableData;
+      return tableData;
     }
 
     //Fungsinya seperti checkbox
@@ -187,15 +186,23 @@ async function main() {
     async function getColumnPivot() {
       const namaSkema = await selectTableSchema();
       const dataTabel = await selectTableNames(namaSkema);
-      console.log("Pilih beberapa kolom untuk dijadikan source table ")
+      console.log("Pilih beberapa kolom untuk dijadikan source table ");
       const sourceColumn = await pilihBanyakKolom(dataTabel.namaTabel);
-      console.log("Pilih jenis agregasi yang akan dilakukan kolom ")
+      console.log("Pilih jenis agregasi yang akan dilakukan kolom ");
       const pilihanAgregasi = await pilihAgregasi();
-      console.log("Pilih satu kolom yang akan dijakian pivoted column  ")
-      const pivotColumn = await pilihKolom(dataTabel.namaTabel);
+      const pilihKolomPivot = [
+        {
+          type: "list",
+          name: "action",
+          message: "Pilih satu kolom yang akan dijadikan pivoted column",
+          choices: sourceColumn.split(","),
+        },
+      ];
+      //di bawah ini adalah pivotColumn
+      const pilihKolomPivotAnswer = await inquirer.prompt(pilihKolomPivot);
       const pivotColumnDetail = await getPivotColumnDetail(
         dataTabel.namaTabelFull,
-        pivotColumn
+        pilihKolomPivotAnswer.action
       );
 
       if (pilihanAgregasi === "Kembali") getColumnPivot();
@@ -210,13 +217,15 @@ async function main() {
           dataTabel.namaTabelFull,
           kolomAgregasi,
           sourceColumn,
-          pivotColumn,
+          pilihKolomPivotAnswer.action,
           pivotColumnDetail,
           pilihanAgregasi
         );
-        const namaLaporan = `Laporan Pivot Kolom ${sourceColumn} Dan ${pivotColumn} Tabel ${
-          dataTabel.namaTabel
-        } ${dayjs().format("DD MMM YYYY (hh.mm A)")}`;
+        const namaLaporan = `Laporan Pivot Kolom ${sourceColumn} Dan ${
+          pilihKolomPivotAnswer.action
+        } Tabel ${dataTabel.namaTabel} ${dayjs().format(
+          "DD MMM YYYY (hh.mm A)"
+        )}`;
         endQuestion(hasil, namaLaporan);
       }
     }
@@ -421,8 +430,9 @@ async function main() {
       const dataTabel = await selectTableNames(namaSkema);
       const pilihanAgregasi = await pilihAgregasi();
 
-      if (pilihanAgregasi === "Kembali") groupBy();
-      else {
+      if (pilihanAgregasi === "Kembali") {
+        groupBy();
+      } else {
         console.log(`Pilih Kolom Untuk Di${pilihanAgregasi.toLowerCase()}`);
         let kolomAgregasi;
         pilihanAgregasi === "Hitung"
@@ -458,7 +468,6 @@ async function main() {
             "",
             ""
           );
-
           endQuestion(hasil, namaLaporan);
         } else {
           const pilihOperator = [
