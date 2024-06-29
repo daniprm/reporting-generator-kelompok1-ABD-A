@@ -1,21 +1,26 @@
 {
-  "name": "fp",
+  "name": "Reporting Generator Kelompok 1 ABD",
   "version": "1.0.0",
   "type": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "nexe index.js --target windows-x64-18.18.2 -o dist/ReportingGenerator.exe --build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "cli-table3": "^0.6.5",
     "exceljs": "^4.4.0",
     "inquirer": "^9.2.23",
     "jsonwebtoken": "^9.0.2",
     "mssql": "^11.0.0"
-  }
+  },
+  "nexe": {
+    "input": "index.js",
+    "output": "dist/ReportingGenerator.exe",
+    "target": "windows-x64-18.18.2"
+  },
+  "bin": "./index.js"
 }

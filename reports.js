@@ -1,5 +1,7 @@
 import sql from "mssql";
+import inquirer from "inquirer";
 import { sqlConfig } from "./config.js";
+import { getPivotColumnDetail } from "./getTables.js";
 import util from "util";
 import Table from "cli-table3";
 
@@ -7,56 +9,188 @@ export async function generateGroupByReport(
   namaTable,
   kolomAgregasi,
   kolomKelompok,
-  agregasi
+  agregasi,
+  isFilter,
+  operator,
+  dataKondisi,
+  teksHasilKondisi,
+  elseTeks
 ) {
   try {
     await sql.connect(sqlConfig);
-    let result;
-    switch (agregasi) {
-      case "Jumlah":
-        result = await sql.query(`
-          SELECT ${kolomKelompok}, SUM(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-        `);
-        break;
-      case "Hitung":
-        result = await sql.query(`
-          SELECT ${kolomKelompok}, COUNT(${kolomAgregasi}) as 'Jumlah ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-        `);
-        break;
-      case "Rata-Rata":
-        result = await sql.query(`
-          SELECT ${kolomKelompok}, AVG(${kolomAgregasi}) as 'Rata-Rata ${kolomAgregasi}' FROM ${namaTable} GROUP BY ${kolomKelompok}
-        `);
-        break;
+    let query;
+    if (agregasi === "Hitung")
+      query = `
+      BEGIN
+        DECLARE @isFilter BIT = ${isFilter}
+
+        IF @isFilter = 0
+        BEGIN
+          SELECT ${kolomKelompok}, 
+            COUNT(${kolomAgregasi}) AS 'Hasil ${agregasi}'
+          FROM ${namaTable}
+          GROUP BY ${kolomKelompok};
+          RETURN;
+        END
+        ELSE
+        BEGIN
+          DECLARE @operator varchar(2) = '${operator}'
+          DECLARE @dataKondisi float = ${dataKondisi}
+          DECLARE @teksHasilKondisi varchar(255) = '${teksHasilKondisi}'
+          DECLARE @elseTeks varchar(255) = '${elseTeks}'
+
+          SELECT ${kolomKelompok}, 
+            COUNT(${kolomAgregasi}) AS 'Hasil ${agregasi}',
+            CASE
+              WHEN @operator = '>' THEN 
+                CASE
+                  WHEN COUNT(${kolomAgregasi}) > @dataKondisi THEN @teksHasilKondisi
+                  ELSE @elseTeks
+                END
+              WHEN @operator = '<' THEN 
+                CASE
+                  WHEN COUNT(${kolomAgregasi}) < @dataKondisi THEN @teksHasilKondisi
+                  ELSE @elseTeks
+                END
+              WHEN @operator = '=' THEN 
+                CASE
+                  WHEN COUNT(${kolomAgregasi}) = @dataKondisi THEN @teksHasilKondisi
+                  ELSE @elseTeks
+                END
+              WHEN @operator = '>=' THEN 
+                CASE
+                  WHEN COUNT(${kolomAgregasi}) >= @dataKondisi THEN @teksHasilKondisi
+                  ELSE @elseTeks
+                END
+              WHEN @operator = '<=' THEN 
+                CASE
+                  WHEN COUNT(${kolomAgregasi}) <= @dataKondisi THEN @teksHasilKondisi
+                  ELSE @elseTeks
+                END
+            END AS 'Hasil Filter'
+          FROM ${namaTable}
+          GROUP BY ${kolomKelompok};
+        END
+      END
+
+    `;
+    else {
+      query = `
+      BEGIN
+        DECLARE @isFilter BIT = ${isFilter}
+        DECLARE @agregasi varchar(10) = '${agregasi}'
+
+        IF @isFilter = 0
+        BEGIN
+          SELECT ${kolomKelompok}, 
+            CASE 
+              WHEN @agregasi = 'Jumlah' THEN SUM(${kolomAgregasi})
+              WHEN @agregasi = 'Rata-Rata' THEN AVG(${kolomAgregasi})
+            END AS 'Hasil ${agregasi}'
+          FROM ${namaTable}
+          GROUP BY ${kolomKelompok};
+          RETURN;
+        END
+        ELSE
+        BEGIN
+          DECLARE @operator varchar(2) = '${operator}'
+          DECLARE @dataKondisi float = ${dataKondisi}
+          DECLARE @teksHasilKondisi varchar(255) = '${teksHasilKondisi}'
+          DECLARE @elseTeks varchar(255) = '${elseTeks}'
+
+          SELECT ${kolomKelompok}, 
+            CASE 
+              WHEN @agregasi = 'Jumlah' THEN SUM(${kolomAgregasi})
+              WHEN @agregasi = 'Rata-Rata' THEN AVG(${kolomAgregasi})
+            END AS 'Hasil ${agregasi}',
+            CASE
+              WHEN @operator = '>' THEN 
+                CASE 
+                  WHEN @agregasi = 'Jumlah' THEN
+                    CASE
+                      WHEN SUM(${kolomAgregasi}) > @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                  WHEN @agregasi = 'Rata-Rata' THEN
+                    CASE
+                      WHEN AVG(${kolomAgregasi}) > @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                END
+              WHEN @operator = '<' THEN 
+                CASE 
+                  WHEN @agregasi = 'Jumlah' THEN
+                    CASE
+                      WHEN SUM(${kolomAgregasi}) < @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                  WHEN @agregasi = 'Rata-Rata' THEN
+                    CASE
+                      WHEN AVG(${kolomAgregasi}) < @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                END
+              WHEN @operator = '=' THEN 
+                CASE 
+                  WHEN @agregasi = 'Jumlah' THEN
+                    CASE
+                      WHEN SUM(${kolomAgregasi}) = @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                  WHEN @agregasi = 'Rata-Rata' THEN
+                    CASE
+                      WHEN AVG(${kolomAgregasi}) = @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                END
+              WHEN @operator = '>=' THEN 
+                CASE 
+                  WHEN @agregasi = 'Jumlah' THEN
+                    CASE
+                      WHEN SUM(${kolomAgregasi}) >= @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                  WHEN @agregasi = 'Rata-Rata' THEN
+                    CASE
+                      WHEN AVG(${kolomAgregasi}) >= @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                END
+              WHEN @operator = '<=' THEN 
+                CASE 
+                  WHEN @agregasi = 'Jumlah' THEN
+                    CASE
+                      WHEN SUM(${kolomAgregasi}) <= @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                  WHEN @agregasi = 'Rata-Rata' THEN
+                    CASE
+                      WHEN AVG(${kolomAgregasi}) <= @dataKondisi THEN @teksHasilKondisi
+                      ELSE @elseTeks
+                    END
+                END
+            END AS 'Hasil Filter'
+          FROM ${namaTable}
+          GROUP BY ${kolomKelompok};
+        END
+      END
+
+      `;
     }
+    let result = await sql.query(query);
 
-    console.log("\n Laporan berhasil dibuat!");
+    console.log("\n Laporan berhasil dibuat.");
 
-    console.log("======================================");
+    // console.log("======================================");
 
-    // result.recordset.forEach((record) => {
-    //   console.log(`${record}`);
-    // });
-    console.log(util.inspect(result.recordset, { maxArrayLength: null }));
+    // // result.recordset.forEach((record) => {
+    // //   console.log(`${record}`);
+    // // });
+    // console.log(util.inspect(result.recordset, { maxArrayLength: null }));
 
-    console.log("======================================");
-    // // Membuat tabel CLI
-    // const table = new Table({
-    //   head: Object.keys(result.recordset[0]),
-    //   colWidths: [30, 20],
-    // });
+    // console.log("======================================");
 
-    // // Menambahkan data ke tabel
-    // result.recordset.forEach((record) => {
-    //   let temp = [];
-    //   Object.values(record).forEach((value) => {
-    //     temp.push(value.toString()); // Output: abc, kls
-    //   });
-    //   table.push(temp);
-    // });
-
-    // // Menampilkan tabel di console
-    // console.log(table.toString());
+    showTable(result.recordset);
 
     console.log("Gunakan tombol panah pada keyboard untuk navigasi: ");
 
@@ -65,4 +199,261 @@ export async function generateGroupByReport(
     console.error("Error generating report:", error);
     throw error;
   }
+}
+// export async function pivotGroupByResult(tabel) {
+//   let namaKolom = "";
+
+//   Object.keys(tabel[0]).forEach((res) => {
+//     namaKolom += "'" + res + "',";
+//   });
+//   namaKolom = namaKolom.slice(0, -1);
+//   console.log(nama)
+
+//   await sql.connect(sqlConfig);
+//   const tipeDataKolom = await sql.query(`
+//     SELECT DATA_TYPE
+//     FROM INFORMATION_SCHEMA.COLUMNS
+//     WHERE TABLE_NAME = '${tabel}'
+//       AND COLUMN_NAME IN (${namaKolom});
+//     `);
+//   console.log(tipeDataKolom.recordset);
+//   let values = "";
+//   tabel.forEach((res) => {
+//     let temp = "";
+//     Object.values(res).forEach((data) => {
+//       if (!isNaN(parseFloat(data))) temp += data + ",";
+//       else temp += "'" + data + "',";
+//     });
+//     temp = temp.slice(0, -1);
+
+//     values += `INSERT INTO #tabelAwal VALUES (${temp});`;
+//   });
+//   console.log(values);
+//   // let result = await sql.query(`
+//   //     IF OBJECT_ID('tempdb..#tabelAwal') IS NOT NULL
+//   //     BEGIN
+//   //         DROP TABLE #tabelAwal;
+//   //     END
+
+//   //     CREATE TABLE #tabelAwal (
+//   //         ID INT,
+//   //         Nama VARCHAR(50)
+//   //     );
+
+//   //         INSERT INTO #tabelAwal (ID, Nama)
+//   //         VALUES (@Counter, 'Nama ' + CAST(@Counter AS VARCHAR(10)));
+
+//   //     -- Select untuk menampilkan hasil
+//   //     SELECT * FROM #tabelAwal;
+//   //     `);
+// }
+export async function generateTableReport(namaTable, kolomTampil, jumlahBaris) {
+  try {
+    await sql.connect(sqlConfig);
+    let result;
+    if (isNaN(parseInt(jumlahBaris)))
+      result = await sql.query(`
+      SELECT ${kolomTampil} FROM ${namaTable}
+    `);
+    else {
+      result = await sql.query(`
+      SELECT TOP ${jumlahBaris} ${kolomTampil} FROM ${namaTable}
+    `);
+    }
+
+    showTable(result.recordset);
+
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+export async function generatePivotReport(
+  dataTabel,
+  kolomAgregasi,
+  sourceColumn,
+  pivotColumn,
+  pivotColumnDetail,
+  pilihanAgregasi
+) {
+  try {
+    await sql.connect(sqlConfig);
+    let result = ``;
+    switch (pilihanAgregasi) {
+      case "Hitung":
+        result = await sql.query(`
+          IF OBJECT_ID('tempdb..##pvtTable') IS NOT NULL
+          BEGIN
+          DROP TABLE ##pvtTable;
+          END
+
+          SELECT * INTO ##pvtTable FROM (
+          SELECT *
+          FROM (
+            SELECT ${sourceColumn} FROM ${dataTabel}
+          )AS Src
+          PIVOT(
+            COUNT(${kolomAgregasi})
+            FOR ${pivotColumn} IN (${pivotColumnDetail})
+          )AS Pvt
+          )AS Temp
+
+          SELECT * FROM ##pvtTable
+        `);
+        break;
+      case "Jumlah":
+        result = await sql.query(`
+          IF OBJECT_ID('tempdb..##pvtTable') IS NOT NULL
+          BEGIN
+          DROP TABLE ##pvtTable;
+          END
+
+          SELECT * INTO ##pvtTable FROM (
+          SELECT *
+          FROM (
+            SELECT ${sourceColumn} FROM ${dataTabel}
+          )AS Src
+          PIVOT(
+            SUM(${kolomAgregasi})
+            FOR ${pivotColumn} IN (${pivotColumnDetail})
+          )AS Pvt
+          )AS Temp
+
+          SELECT * FROM ##pvtTable
+          `);
+        break;
+      case "Rata-Rata":
+        result = await sql.query(`
+          IF OBJECT_ID('tempdb..##pvtTable') IS NOT NULL
+          BEGIN
+          DROP TABLE ##pvtTable;
+          END
+
+          SELECT * INTO ##pvtTable FROM (
+          SELECT *
+          FROM (
+            SELECT ${sourceColumn} FROM ${dataTabel}
+          )AS Src
+          PIVOT(
+            AVG(${kolomAgregasi})
+            FOR ${pivotColumn} IN (${pivotColumnDetail})
+          
+          )AS Pvt
+          )AS Temp
+
+          SELECT * FROM ##pvtTable
+          `);
+        break;
+    }
+
+    console.log("\n Laporan berhasil dibuat.");
+
+    // console.log("======================================");
+
+    // // result.recordset.forEach((record) => {
+    // //   console.log(`${record}`);
+    // // });
+    // console.log(util.inspect(result.recordset, { maxArrayLength: null }));
+
+    // console.log("======================================");
+
+    showTable(result.recordset);
+
+    const unpivotQuestion = [
+      {
+        type: "list",
+        name: "action",
+        message: "Unpivot Data?",
+        choices: ["Ya", "Tidak"],
+      },
+    ];
+
+    const unpivotAnswer = await inquirer.prompt(unpivotQuestion);
+
+    let resultUnpivot;
+    if (unpivotAnswer.action === "Ya") {
+      resultUnpivot = await sql.query(`
+        SELECT *
+        FROM ##pvtTable
+        AS Src
+        UNPIVOT (
+          ${kolomAgregasi} FOR ${pivotColumn} IN (${pivotColumnDetail})
+        ) AS Final
+        `);
+      showTable(resultUnpivot.recordset);
+    }
+
+    const hasil = [result.recordset, resultUnpivot.recordset];
+
+    console.log("Gunakan tombol panah pada keyboard untuk navigasi: ");
+
+    return hasil;
+  } catch (error) {
+    console.error("Error generating report:", error);
+    throw error;
+  }
+}
+
+export async function generateFilterReport(
+  tableName,
+  displayColumns,
+  filterColumn,
+  conditions,
+  elseText
+) {
+  try {
+    await sql.connect(sqlConfig);
+    let query = `SELECT ${displayColumns}, CASE `; // Tambahkan koma di sini untuk memisahkan kolom dan CASE
+
+    conditions.forEach((condition, index) => {
+      if (condition.filterType === "LIKE") {
+        query += `WHEN ${filterColumn} LIKE '%${condition.condition}%' THEN '${condition.text}' `;
+      } else {
+        const operator =
+          condition.filterType === "="
+            ? "="
+            : condition.filterType === ">"
+            ? ">"
+            : condition.filterType === "<"
+            ? "<"
+            : "";
+
+        query += `WHEN ${filterColumn} ${operator} '${condition.condition}' THEN '${condition.text}' `;
+      }
+    });
+
+    query += `ELSE '${elseText}' END AS Hasil FROM ${tableName}`;
+
+    console.log("Executing query:", query); // Log the query before execution
+
+    const result = await sql.query(query);
+    console.log("Query executed successfully.");
+
+    showTable(result.recordset);
+
+    return result.recordset;
+  } catch (error) {
+    console.error("Error generating filter report:", error); // Log errors if any
+    throw error;
+  }
+}
+
+function showTable(data) {
+  // Membuat tabel CLI
+  const table = new Table({
+    head: Object.keys(data[0]),
+  });
+
+  // Menambahkan data ke tabel
+  data.forEach((record) => {
+    let temp = [];
+    Object.values(record).forEach((value) => {
+      if (value === null) temp.push(value);
+      else temp.push(value.toString()); // Output: abc, kls
+    });
+    table.push(temp);
+  });
+
+  // Menampilkan tabel di console
+  console.log(table.toString());
 }
