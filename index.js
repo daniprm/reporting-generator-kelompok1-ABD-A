@@ -343,13 +343,13 @@ async function main() {
           type: "input",
           name: "count",
           message:
-            "Masukkan jumlah kondisi yang ingin Anda gunakan (1, 2, atau 3):",
+            "Masukkan jumlah kondisi yang ingin Anda gunakan (1 hingga 9):",
           validate: function (value) {
             var valid =
               !isNaN(parseFloat(value)) &&
               parseInt(value) >= 1 &&
-              parseInt(value) <= 3;
-            return valid || "Masukkan angka yang valid antara 1 dan 3!";
+              parseInt(value) <= 9;
+            return valid || "Masukkan angka yang valid antara 1 hingga 9!";
           },
           filter: Number,
         },
