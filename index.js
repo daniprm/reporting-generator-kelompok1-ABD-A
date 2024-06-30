@@ -378,19 +378,6 @@ async function main() {
       );
       kolomYangDitampilkan = kolomYangDitampilkan.slice(0, -1);
 
-      console.log("tabel sumber: " + dataTabel.namaTabelFull);
-      console.log("kolom sumber: " + kolomSumber);
-      console.log("kolom yang diunpivot: " + kolomUnpivot);
-      console.log("nama kolom hasil unpivot: " + namaKolomHasilUnpivot);
-      console.log(
-        "nama kolom untuk kolomm sumber unpivot: " + namaKolomUntukSumberUnpivot
-      );
-      console.log(
-        "kolom yang ditampilkan: " +
-          namaKolomUntukSumberUnpivot +
-          namaKolomHasilUnpivot +
-          kolomYangDitampilkan
-      );
       const hasil = await generateUnpivotReport(
         dataTabel.namaTabelFull,
         kolomSumber,
