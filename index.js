@@ -313,7 +313,7 @@ async function main() {
                 console.log("");
                 console.log(isSameDataType[1]);
                 if (!isSameDataType[0]) {
-                  return `\nPilih Kolom yang Memiliki Tipe Data Sama`;
+                  return `Pilih Kolom yang Memiliki Tipe Data Sama`;
                 }
                 return true;
               }
@@ -350,7 +350,7 @@ async function main() {
       ];
 
       console.log(
-        "\nPERHATIAN:  Jika setelah memasukkan kolom sumber unpivot tidak ada reaksi apa-apa, ketikan ulang nama kolom sumbernya atau klik panah pada keyboard."
+        "\nPERHATIAN:  Jika setelah memasukkan kolom sumber unpivot tidak ada reaksi apa-apa, ketikan ulang nama kolom sumbernya atau tekan panah pada keyboard atau tekan Enter pada keyboard."
       );
       const namaKolomUntukSumberUnpivotAnswer = await inquirer.prompt(
         namaKolomUntukSumberUnpivotQuestion
