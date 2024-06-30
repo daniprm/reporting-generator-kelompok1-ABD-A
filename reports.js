@@ -393,6 +393,32 @@ export async function generatePivotReport(
     throw error;
   }
 }
+export async function generateUnpivotReport(
+  tabelSumber,
+  kolomSumber,
+  kolomUnpivot,
+  kolomHasilUnpivot,
+  kolomSumberUnpivot,
+  kolomTampil
+) {
+  try {
+    await sql.connect(sqlConfig);
+    let result = await sql.query(`
+        SELECT ${kolomTampil}, ${kolomSumberUnpivot}, ${kolomHasilUnpivot}  
+        FROM (
+        SELECT ${kolomSumber} FROM ${tabelSumber}
+        ) AS Src 
+        UNPIVOT (
+                  ${kolomHasilUnpivot} FOR ${kolomSumberUnpivot} IN (${kolomUnpivot})
+                ) AS Final;
+      `);
+    showTable(result.recordset);
+    return result.recordset;
+  } catch (error) {
+    console.error("Error generating report:", error);
+    throw error;
+  }
+}
 
 export async function generateFilterReport(
   tableName,

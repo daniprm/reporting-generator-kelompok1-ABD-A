@@ -6,6 +6,7 @@ import {
   generateFilterReport,
   generateTableReport,
   generatePivotReport,
+  generateUnpivotReport,
 } from "./reports.js";
 import {
   getTableSchema,
@@ -13,6 +14,7 @@ import {
   getColumns,
   getColumnsAngka,
   getPivotColumnDetail,
+  cekTipeDataKolom,
 } from "./getTables.js";
 import { loginReports, databaseAuthReports } from "./authReports.js";
 import dayjs from "dayjs";
@@ -42,6 +44,7 @@ async function main() {
             "Lihat Semua Data",
             "Kelompokkan Berdasarkan Kolom",
             "Pivot Data",
+            "Unpivot Data",
             "Filter Data",
             "Laporan Autentikasi",
             "Keluar",
@@ -58,6 +61,10 @@ async function main() {
           break;
         case "Pivot Data":
           getColumnPivot();
+          break;
+
+        case "Unpivot Data":
+          unpivotKolom();
 
           break;
         case "Filter Data":
@@ -182,6 +189,7 @@ async function main() {
     // ==================End of Ngambil Data tabel (skema, nama tabel full, kolom)==============
 
     // PEMBAGIAN KERJA MULAI DI SINI
+
     // PIVOTTT---------------------------------------------------------------------------------
     async function getColumnPivot() {
       const namaSkema = await selectTableSchema();
@@ -279,6 +287,125 @@ async function main() {
       }
     }
     // END PIVOTTT------------------------------------------------------------------------------
+
+    // UNPIVOT
+    async function unpivotKolom() {
+      const namaSkema = await selectTableSchema();
+      const dataTabel = await selectTableNames(namaSkema);
+
+      console.log("Pilih Kolom Sebagai Sumber Unpivot");
+      const kolomSumber = await pilihBanyakKolom(dataTabel.namaTabel);
+      const kolomUnpivotQuestion = [
+        {
+          type: "checkbox",
+          name: "action",
+          message:
+            "Pilih Kolom Untuk Dilakukan Unpivot (JIKA MEMILIH LEBIH DARI SATU KOLOM HARUS MEMILIKI TIPE DATA YANG SAMA)",
+          choices: kolomSumber.split(","),
+          validate: function (answer) {
+            if (answer.length < 1) {
+              return "Anda harus memilih setidaknya satu opsi.";
+            }
+
+            // Mengembalikan Promise dalam fungsi validasi
+            return cekTipeDataKolom(dataTabel.namaTabel, answer).then(
+              (isSameDataType) => {
+                console.log("");
+                console.log(isSameDataType[1]);
+                if (!isSameDataType[0]) {
+                  return `\nPilih Kolom yang Memiliki Tipe Data Sama`;
+                }
+                return true;
+              }
+            );
+          },
+        },
+      ];
+
+      const kolomUnpivotAnswer = await inquirer.prompt(kolomUnpivotQuestion);
+      let kolomUnpivot = "";
+
+      kolomUnpivotAnswer.action.forEach((res) => (kolomUnpivot += res + ","));
+      kolomUnpivot = kolomUnpivot.slice(0, -1);
+
+      const namaKolomHasilUnpivotQuestion = [
+        {
+          type: "input",
+          name: "action",
+          message: "Masukkan nama kolom hasil unpivot: ",
+        },
+      ];
+
+      const namaKolomHasilUnpivotAnswer = await inquirer.prompt(
+        namaKolomHasilUnpivotQuestion
+      );
+      const namaKolomHasilUnpivot = namaKolomHasilUnpivotAnswer.action;
+
+      const namaKolomUntukSumberUnpivotQuestion = [
+        {
+          type: "input",
+          name: "action",
+          message: "Masukkan nama kolom untuk sumber unpivot: ",
+        },
+      ];
+
+      console.log(
+        "\nPERHATIAN:  Jika setelah memasukkan kolom sumber unpivot tidak ada reaksi apa-apa, ketikan ulang nama kolom sumbernya atau klik panah pada keyboard."
+      );
+      const namaKolomUntukSumberUnpivotAnswer = await inquirer.prompt(
+        namaKolomUntukSumberUnpivotQuestion
+      );
+      const namaKolomUntukSumberUnpivot =
+        namaKolomUntukSumberUnpivotAnswer.action;
+
+      const kolomYangDitampilkanQuestion = [
+        {
+          type: "checkbox",
+          name: "action",
+          message: "Pilih Kolom Untuk Ditampilkan",
+          choices: kolomSumber
+            .split(",")
+            .filter((res) => !kolomUnpivotAnswer.action.includes(res)),
+        },
+      ];
+      const kolomYangDitampilkanAnswer = await inquirer.prompt(
+        kolomYangDitampilkanQuestion
+      );
+      let kolomYangDitampilkan = "";
+
+      kolomYangDitampilkanAnswer.action.forEach(
+        (res) => (kolomYangDitampilkan += res + ",")
+      );
+      kolomYangDitampilkan = kolomYangDitampilkan.slice(0, -1);
+
+      console.log("tabel sumber: " + dataTabel.namaTabelFull);
+      console.log("kolom sumber: " + kolomSumber);
+      console.log("kolom yang diunpivot: " + kolomUnpivot);
+      console.log("nama kolom hasil unpivot: " + namaKolomHasilUnpivot);
+      console.log(
+        "nama kolom untuk kolomm sumber unpivot: " + namaKolomUntukSumberUnpivot
+      );
+      console.log(
+        "kolom yang ditampilkan: " +
+          namaKolomUntukSumberUnpivot +
+          namaKolomHasilUnpivot +
+          kolomYangDitampilkan
+      );
+      const hasil = await generateUnpivotReport(
+        dataTabel.namaTabelFull,
+        kolomSumber,
+        kolomUnpivot,
+        namaKolomHasilUnpivot,
+        namaKolomUntukSumberUnpivot,
+        kolomYangDitampilkan
+      );
+      endQuestion(
+        hasil,
+        `Laporan Unpivot Tabel ${dataTabel.namaTabel} ${dayjs().format(
+          "DD MMM YYYY (hh.mm A)"
+        )}`
+      );
+    }
 
     async function tampilSemua() {
       const namaSkema = await selectTableSchema();

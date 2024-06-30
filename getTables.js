@@ -122,3 +122,34 @@ export async function getPivotColumnDetail(namaTable, pivotColumn) {
     console.error("Error retrieving table names:", err.message);
   }
 }
+export async function cekTipeDataKolom(namaTabel, kolom) {
+  try {
+    // Establish a connection to the database
+    let pool = await sql.connect(sqlConfig);
+
+    let namaKolom = "";
+    kolom.forEach((res) => (namaKolom += "'" + res + "',"));
+    namaKolom = namaKolom.slice(0, -1);
+
+    // Query to get all table names in the current database
+    const result = await pool.request().query(`SELECT 
+                  COLUMN_NAME, 
+                  DATA_TYPE
+              FROM 
+                  INFORMATION_SCHEMA.COLUMNS 
+              WHERE 
+                  TABLE_NAME = '${namaTabel}' AND 
+                  COLUMN_NAME IN ( ${namaKolom});
+      `);
+
+    const hasilReturn = [
+      result.recordset.every(
+        (value) => value.DATA_TYPE === result.recordset[0].DATA_TYPE
+      ),
+      result.recordset,
+    ];
+    return hasilReturn;
+  } catch (err) {
+    console.error("Error retrieving table names:", err.message);
+  }
+}

@@ -1,10 +1,6 @@
-const myObject = {
-  nama: "abc",
-  kelas: "kls",
-};
-let tes = [];
-Object.values(myObject).forEach((value) => {
-  tes.push(value); // Output: abc, kls
-});
+let kolom = ["a", "a", "a"];
+// let hasil = "";
+// kolom.split(",").forEach((res) => (hasil += "'" + res + "',"));
+// console.log(hasil.slice(0, -1));
 
-console.log(Object.keys(myObject));
+console.log(kolom.every((value) => value === kolom[0]));
